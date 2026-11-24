@@ -35,7 +35,15 @@ npm run dev
 
 Note: `basePath` is `/synodos` for GitHub Pages. Locally the app is served at `http://localhost:3000/synodos/`.
 
+## Desktop demo
+
+`desktop/` packages the planner as an Electron app that serves the static export locally, so it works offline. GitHub Actions builds Windows (NSIS + zip), macOS (dmg + zip) and Linux (AppImage + deb) on native runners and attaches them to the `v*` release.
+
+Unsigned macOS builds need right-click → Open on first launch.
+
 ## Docs
 
 - `docs/PRODUCT_RESEARCH.md` — architecture, LLM economics, travel APIs, GDPR, phased plan
 - `docs/CONSUMER_RESEARCH.md` — 2026 traveller expectations, willingness to pay, feature priorities
+- `docs/COMPETITOR_ANALYSIS.md` — Layla/Expedia, Wanderlog, Mindtrip, GuideGeek, Google, Tripadvisor
+- `docs/REVISED_PLAN.md` — what to build, what not to build, gates and metrics
