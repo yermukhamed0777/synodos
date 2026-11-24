@@ -1,0 +1,46 @@
+{
+  "name": "synodos-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Synodos desktop demo — the trip planner, offline.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "app.synodos.desktop",
+    "productName": "Synodos",
+    "files": [
+      "main.js",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "../out",
+        "to": "out"
+      }
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": ["nsis", "zip"],
+      "artifactName": "Synodos-${version}-win-${arch}.${ext}"
+    },
+    "mac": {
+      "target": ["dmg", "zip"],
+      "category": "public.app-category.travel",
+      "artifactName": "Synodos-${version}-mac-${arch}.${ext}"
+    },
+    "linux": {
+      "target": ["AppImage", "deb"],
+      "category": "Travel",
+      "artifactName": "Synodos-${version}-linux-${arch}.${ext}"
+    }
+  }
+}

@@ -17,8 +17,14 @@ export type City = {
   tagline: string;
   currency: string;
   dailyBudget: number;
+  /** Date the curated dataset was last checked by a human. */
+  verifiedAt: string;
   items: Item[];
 };
+
+export type BudgetLine = { label: string; low: number; high: number; share: number };
+
+export type Handoff = { label: string; href: string; note: string };
 
 export const INTERESTS: { id: Interest; label: string }[] = [
   { id: 'food', label: 'Food' },
@@ -37,6 +43,7 @@ export const CITIES: City[] = [
     tagline: 'Neon calm, old temples, late-night noodles.',
     currency: 'JPY',
     dailyBudget: 145,
+    verifiedAt: '2026-11-24',
     items: [
       { title: 'Tsukiji outer market breakfast', detail: 'Tamago skewers, uni and a standing counter coffee before the crowds.', slot: 'morning', tags: ['food', 'culture'], price: 18 },
       { title: 'Meiji Jingu forest walk', detail: 'Cedar avenue into the shrine, then a quiet loop through Yoyogi Park.', slot: 'morning', tags: ['nature', 'culture', 'relax'], price: 0 },
@@ -56,6 +63,7 @@ export const CITIES: City[] = [
     tagline: 'Tiled hills, Atlantic light, custard tarts.',
     currency: 'EUR',
     dailyBudget: 105,
+    verifiedAt: '2026-11-24',
     items: [
       { title: 'Miradouro da Graça sunrise', detail: 'The city before the tour groups, with a coffee from the kiosk.', slot: 'morning', tags: ['relax', 'culture'], price: 3 },
       { title: 'Alfama market breakfast', detail: 'Pastéis de nata and a galão in a tiled corner café.', slot: 'morning', tags: ['food', 'culture'], price: 7 },
@@ -75,6 +83,7 @@ export const CITIES: City[] = [
     tagline: 'Rice terraces, reef breaks, long slow afternoons.',
     currency: 'IDR',
     dailyBudget: 78,
+    verifiedAt: '2026-11-24',
     items: [
       { title: 'Tegallalang terrace walk', detail: 'Start at 7am, walk the ridge path before the heat and buses.', slot: 'morning', tags: ['nature', 'relax'], price: 6 },
       { title: 'Ubud morning market', detail: 'Fruit, incense and offerings; breakfast at a warung nearby.', slot: 'morning', tags: ['food', 'culture'], price: 5 },
@@ -94,6 +103,7 @@ export const CITIES: City[] = [
     tagline: 'Bakery mornings, long walks, one perfect museum.',
     currency: 'EUR',
     dailyBudget: 165,
+    verifiedAt: '2026-11-24',
     items: [
       { title: 'Boulangerie breakfast', detail: 'Croissant, pain au chocolat, a bench in a small square.', slot: 'morning', tags: ['food', 'relax'], price: 8 },
       { title: 'Marché d’Aligre', detail: 'Cheese, olives and a coffee among the market stalls.', slot: 'morning', tags: ['food', 'culture'], price: 10 },
@@ -181,6 +191,53 @@ export function estimateBudget(city: City, days: number, travellers: number) {
   const low = Math.round(city.dailyBudget * days * travellers * 0.8);
   const high = Math.round(city.dailyBudget * days * travellers * 1.35);
   return { low, high, currency: city.currency };
+}
+
+const SHARES: { label: string; share: number }[] = [
+  { label: 'Stay', share: 0.45 },
+  { label: 'Food', share: 0.25 },
+  { label: 'Activities', share: 0.2 },
+  { label: 'Local transport', share: 0.1 },
+];
+
+export function budgetBreakdown(city: City, days: number, travellers: number): BudgetLine[] {
+  const { low, high } = estimateBudget(city, days, travellers);
+  return SHARES.map((s) => ({
+    label: s.label,
+    share: s.share,
+    low: Math.round(low * s.share),
+    high: Math.round(high * s.share),
+  }));
+}
+
+export function mapLink(city: City, item: Item) {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${item.title}, ${city.name}`)}`;
+}
+
+export function handoffLinks(city: City): Handoff[] {
+  const q = encodeURIComponent(city.name);
+  return [
+    {
+      label: 'Compare flights',
+      href: `https://www.google.com/travel/flights?q=${encodeURIComponent(`Flights to ${city.name}`)}`,
+      note: 'Google Flights search',
+    },
+    {
+      label: 'Find stays',
+      href: `https://www.booking.com/searchresults.html?ss=${q}`,
+      note: 'Booking.com search',
+    },
+    {
+      label: 'Activities',
+      href: `https://www.getyourguide.com/s/?q=${q}`,
+      note: 'GetYourGuide search',
+    },
+    {
+      label: 'City map',
+      href: `https://www.google.com/maps/search/?api=1&query=${q}`,
+      note: 'Google Maps',
+    },
+  ];
 }
 
 export function itineraryToMarkdown(city: City, days: PlannedDay[], travellers: number) {

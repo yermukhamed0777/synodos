@@ -9,3 +9,5 @@ next-env.d.ts
 npm-debug.log*
 docs/live-*.png
 docs/final-*.png
+desktop/node_modules/
+desktop/dist/

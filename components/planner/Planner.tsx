@@ -3,11 +3,14 @@
 import { useMemo, useState } from 'react';
 import { BASE_PATH } from '@/lib/site';
 import {
+  budgetBreakdown,
   buildItinerary,
   CITIES,
   estimateBudget,
+  handoffLinks,
   INTERESTS,
   itineraryToMarkdown,
+  mapLink,
   rebuildDay,
   type City,
   type Interest,
@@ -17,9 +20,12 @@ import {
 type Result = { city: City; days: PlannedDay[]; travellers: number } | null;
 
 export function Planner() {
+  const [mode, setMode] = useState<'know' | 'choose'>('know');
   const [cityId, setCityId] = useState(CITIES[0].id);
   const [nights, setNights] = useState(3);
   const [travellers, setTravellers] = useState(2);
+  const [dailyBudget, setDailyBudget] = useState(150);
+  const [recommendation, setRecommendation] = useState('');
   const [interests, setInterests] = useState<Interest[]>(['food', 'culture']);
   const [result, setResult] = useState<Result>(null);
   const [saved, setSaved] = useState(false);
@@ -29,6 +35,19 @@ export function Planner() {
 
   const toggleInterest = (id: Interest) =>
     setInterests((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+
+  const recommendCity = () => {
+    const scored = CITIES.map((c) => {
+      const overlap = c.items.filter((i) => i.tags.some((t) => interests.includes(t))).length;
+      const fit = c.dailyBudget <= dailyBudget ? 4 : -3;
+      return { city: c, score: overlap + fit };
+    }).sort((a, b) => b.score - a.score);
+    const best = scored[0].city;
+    setCityId(best.id);
+    setRecommendation(
+      `${best.name} fits a ${dailyBudget} ${best.currency}/day budget and your ${interests.length ? interests.join(', ') : 'open'} preferences.`
+    );
+  };
 
   const generate = () => {
     const days = buildItinerary(city, nights, interests);
@@ -81,28 +100,71 @@ export function Planner() {
   };
 
   const budget = result ? estimateBudget(result.city, result.days.length, result.travellers) : null;
+  const breakdown = result ? budgetBreakdown(result.city, result.days.length, result.travellers) : [];
+  const handoffs = result ? handoffLinks(result.city) : [];
 
   return (
     <div className="planner">
       <div className="planner-form">
         <div className="planner-step">
           <span className="step-no">01 / Destination</span>
-          <div className="city-grid" role="radiogroup" aria-label="Destination">
-            {CITIES.map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                role="radio"
-                aria-checked={cityId === c.id}
-                className={`city-option ${cityId === c.id ? 'is-active' : ''}`}
-                onClick={() => setCityId(c.id)}
-              >
-                <strong>{c.name}</strong>
-                <span>{c.country}</span>
-              </button>
-            ))}
+          <div className="mode-toggle" role="tablist" aria-label="Destination mode">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === 'know'}
+              className={mode === 'know' ? 'is-active' : ''}
+              onClick={() => setMode('know')}
+            >
+              I know where
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === 'choose'}
+              className={mode === 'choose' ? 'is-active' : ''}
+              onClick={() => setMode('choose')}
+            >
+              Help me choose
+            </button>
           </div>
-          <p className="planner-hint">{city.tagline}</p>
+
+          {mode === 'know' ? (
+            <>
+              <div className="city-grid" role="radiogroup" aria-label="Destination">
+                {CITIES.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={cityId === c.id}
+                    className={`city-option ${cityId === c.id ? 'is-active' : ''}`}
+                    onClick={() => setCityId(c.id)}
+                  >
+                    <strong>{c.name}</strong>
+                    <span>{c.country}</span>
+                  </button>
+                ))}
+              </div>
+              <p className="planner-hint">{city.tagline}</p>
+            </>
+          ) : (
+            <div className="choose-box">
+              <label className="planner-field">
+                <span>Budget per day</span>
+                <select value={dailyBudget} onChange={(e) => setDailyBudget(Number(e.target.value))}>
+                  {[80, 120, 180, 250].map((b) => <option key={b} value={b}>{b} per day</option>)}
+                </select>
+              </label>
+              <button type="button" className="btn btn--ghost btn--small" onClick={recommendCity}>
+                Find my city
+              </button>
+              {recommendation && (
+                <p className="recommendation" role="status">{recommendation}</p>
+              )}
+              <p className="planner-hint">Recommendation uses the curated dataset and your budget band. It is a starting point, not a verdict.</p>
+            </div>
+          )}
         </div>
 
         <div className="planner-step">
@@ -174,6 +236,7 @@ export function Planner() {
                 <p className="muted" style={{ fontSize: 13, margin: 0 }}>
                   {result.travellers} traveller{result.travellers > 1 ? 's' : ''} · {result.city.country}
                 </p>
+                <span className="verified">Checked {result.city.verifiedAt} · curated dataset</span>
               </div>
               {budget && (
                 <div className="budget">
@@ -182,6 +245,16 @@ export function Planner() {
                   <small>{budget.currency} · excludes flights</small>
                 </div>
               )}
+            </div>
+
+            <div className="budget-breakdown" aria-label="Estimated budget by category">
+              {breakdown.map((line) => (
+                <div className="budget-line" key={line.label}>
+                  <span className="budget-label">{line.label}</span>
+                  <div className="budget-bar" aria-hidden="true"><i style={{ width: `${line.share * 100}%` }} /></div>
+                  <span className="budget-value">{line.low}–{line.high} {result.city.currency}</span>
+                </div>
+              ))}
             </div>
 
             <div className="plan-days">
@@ -203,6 +276,7 @@ export function Planner() {
                           <p>{item.detail}</p>
                           <div className="plan-tags">
                             {item.tags.map((t) => <span key={t}>{t}</span>)}
+                            <a className="plan-map" href={mapLink(result.city, item)} target="_blank" rel="noreferrer">Map ↗</a>
                             <em>~{item.price} {result.city.currency}</em>
                           </div>
                         </div>
@@ -219,6 +293,22 @@ export function Planner() {
               <button type="button" className="btn btn--ghost btn--small" onClick={copy}>{copied ? 'Copied ✓' : 'Copy'}</button>
               <a href={`${BASE_PATH}/#waitlist`} className="btn btn--outline-red btn--small">Get early access</a>
             </div>
+
+            <div className="handoff">
+              <div className="handoff-copy">
+                <span className="eyebrow">Verify and book</span>
+                <p>These open real search pages for this city. Nothing is booked here, and no commission is earned.</p>
+              </div>
+              <div className="handoff-links">
+                {handoffs.map((h) => (
+                  <a key={h.label} href={h.href} target="_blank" rel="noreferrer">
+                    <strong>{h.label}</strong>
+                    <span>{h.note} ↗</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+
             <p className="form-note">
               Saved plans stay in this browser. Verify opening hours, prices and travel times before
               booking — this is a prototype, not a booking engine.
