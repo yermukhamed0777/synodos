@@ -1,63 +1,76 @@
-import { SITE } from '@/lib/site';
+import { ConceptModal } from '@/components/ui/ConceptModal';
+import { asset, HERO_ALERTS, TRIP_ROWS, TRUST, FEATURE_BAR } from '@/lib/site';
+
+const ICONS: Record<string, string> = { flight: '✈', hotel: '▦', weather: '◍' };
 
 export function Hero() {
   return (
-    <section className="hero" id="top">
-      <div className="hero-main wrap">
-        <div className="hero-meta">
-          <span className="tag tag--red">Private beta</span>
-          <span className="tag">AI travel companion</span>
-          <span className="tag tag--purple">One journey at a time</span>
-        </div>
+    <>
+      <section className="hero" id="top">
+        <img className="hero-bg" src={asset('hero-aurora.webp')} alt="" aria-hidden="true" />
+        <div className="wrap hero-inner">
+          <div className="hero-copy">
+            <span className="eyebrow">AI travel companion</span>
+            <h1 className="display display--hero">
+              See the world.<br />
+              Synodos handles <span className="accent-purple">the rest.</span>
+            </h1>
+            <p className="lead">
+              Your AI companion that plans, guides and supports you at every step of the journey.
+              Before you go, while you’re there, and when you return.
+            </p>
+            <div className="hero-actions">
+              <a href="#journey" className="btn btn--primary">Start Your Journey <span aria-hidden="true">→</span></a>
+              <ConceptModal />
+            </div>
 
-        <h1 className="hero-type">
-          <span className="hero-word">Travel</span>
-          <span className="hero-word hero-word--stroke">without</span>
-          <span className="hero-word hero-word--purple">friction.</span>
-        </h1>
-
-        <div className="hero-bottom">
-          <p className="lead">
-            {SITE.name} is the companion that shows up when you start planning,
-            stays useful while you move, and keeps what matters afterwards.
-          </p>
-          <div className="hero-actions">
-            <a href="#access" className="btn btn--red">
-              Get early access <span aria-hidden="true">↗</span>
-            </a>
-            <a href="#idea" className="btn btn--outline">
-              See the idea
-            </a>
+            <div className="hero-note">
+              <span className="eyebrow eyebrow--purple">Trusted by travellers worldwide</span>
+              <div className="trust-row">
+                {TRUST.map((name) => <span key={name}>{name}</span>)}
+              </div>
+            </div>
           </div>
+
+          <div className="alert-stack" aria-label="Live travel updates preview">
+            {HERO_ALERTS.map((a) => (
+              <div className="glass-card alert" key={a.id}>
+                <span className={`alert-icon ${a.tone === 'purple' ? 'alert-icon--purple' : a.tone === 'neutral' ? 'alert-icon--neutral' : ''}`} aria-hidden="true">{ICONS[a.icon]}</span>
+                <div className="alert-body"><strong>{a.title}</strong><span>{a.detail}</span></div>
+                <span className={`alert-status ${a.status === 'Heads up' ? 'alert-status--warn' : ''}`}>{a.status}</span>
+              </div>
+            ))}
+
+            <div className="glass-card trip-card">
+              <div className="trip-card-head">Trip Overview <span>•••</span></div>
+              <div className="trip-card-body">
+                <div className="ring"><div><strong>12</strong><small>Days left</small></div></div>
+                <div className="trip-rows">
+                  {TRIP_ROWS.map((row) => (
+                    <div className="trip-row" key={row.label}>
+                      <i className={`dot ${row.tone === 'red' ? 'dot--red' : row.tone === 'purple' ? 'dot--purple' : ''}`} aria-hidden="true" />
+                      <span>{row.label}</span>
+                      <b className={row.tone === 'red' ? 'red' : row.tone === 'purple' ? 'purple' : ''}>{row.value}</b>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div className="wrap" style={{ position: 'relative', zIndex: 3, marginTop: -32, marginBottom: 56 }}>
+        <div className="feature-strip">
+          {FEATURE_BAR.map((f) => (
+            <div className="feature-cell" key={f.title}>
+              <span className="fi" aria-hidden="true">{f.icon === 'spark' ? '✦' : f.icon === 'clock' ? '◷' : f.icon === 'globe' ? '◎' : f.icon === 'shield' ? '◇' : '⌘'}</span>
+              <h4>{f.title}</h4>
+              <p>{f.body}</p>
+            </div>
+          ))}
         </div>
       </div>
-
-      <aside className="hero-side wrap" aria-label="At a glance">
-        <div className="hero-side-cell">
-          <div className="hero-side-num">01</div>
-          <div className="hero-side-label">
-            Before
-            <br />
-            The decisions
-          </div>
-        </div>
-        <div className="hero-side-cell">
-          <div className="hero-side-num">02</div>
-          <div className="hero-side-label">
-            During
-            <br />
-            The moments
-          </div>
-        </div>
-        <div className="hero-side-cell">
-          <div className="hero-side-num">03</div>
-          <div className="hero-side-label">
-            After
-            <br />
-            The memory
-          </div>
-        </div>
-      </aside>
-    </section>
+    </>
   );
 }

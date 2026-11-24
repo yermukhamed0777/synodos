@@ -1,51 +1,54 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { NAV_ITEMS } from '@/lib/site';
 
 export function Navbar() {
+  const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
   return (
-    <header className="nav">
+    <header className={`nav ${scrolled ? 'nav--scrolled' : ''}`}>
       <div className="wrap nav-inner">
         <a href="#top" className="wordmark" aria-label="Synodos — back to top">
-          SYNODOS<span>.</span>
+          <span className="wordmark-mark" aria-hidden="true" /> SYNODOS
         </a>
 
         <nav className="nav-links" aria-label="Main navigation">
           {NAV_ITEMS.map((item) => (
-            <a key={item.href} href={item.href}>
-              {item.label}
-            </a>
+            <a key={item.href} href={item.href}>{item.label}</a>
           ))}
         </nav>
 
-        <a href="#access" className="btn btn--red nav-cta">
-          Get early access <span aria-hidden="true">↗</span>
-        </a>
-
-        <button
-          type="button"
-          className="menu-toggle"
-          onClick={() => setOpen((v) => !v)}
-          aria-expanded={open}
-          aria-label={open ? 'Close menu' : 'Open menu'}
-        >
-          {open ? '×' : '≡'}
-        </button>
+        <div className="nav-actions">
+          <a href="#waitlist" className="btn btn--primary btn--small nav-cta">
+            Join Waitlist <span aria-hidden="true">→</span>
+          </a>
+          <button
+            type="button"
+            className="icon-btn menu-toggle"
+            aria-label={open ? 'Close menu' : 'Open menu'}
+            aria-expanded={open}
+            onClick={() => setOpen((v) => !v)}
+          >
+            {open ? '×' : '≡'}
+          </button>
+        </div>
       </div>
 
       {open && (
-        <nav className="wrap mobile-menu" aria-label="Mobile navigation">
+        <nav className="mobile-menu" aria-label="Mobile navigation">
           {NAV_ITEMS.map((item) => (
-            <a key={item.href} href={item.href} onClick={() => setOpen(false)}>
-              {item.label}
-            </a>
+            <a key={item.href} href={item.href} onClick={() => setOpen(false)}>{item.label}</a>
           ))}
-          <a href="#access" onClick={() => setOpen(false)}>
-            Get early access
-          </a>
+          <a href="#waitlist" onClick={() => setOpen(false)}>Join Waitlist</a>
         </nav>
       )}
     </header>

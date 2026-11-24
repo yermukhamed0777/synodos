@@ -11,18 +11,6 @@ export default function Home() {
   return (
     <>
       <Navbar />
-      <div className="marquee" aria-hidden="true">
-        <div className="marquee-track">
-          <span>Before</span>
-          <span>During</span>
-          <span>After</span>
-          <span>Repeat</span>
-          <span>Before</span>
-          <span>During</span>
-          <span>After</span>
-          <span>Repeat</span>
-        </div>
-      </div>
       <main>
         <Hero />
         <Idea />
