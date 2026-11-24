@@ -8,6 +8,7 @@ import {
   estimateBudget,
   INTERESTS,
   itineraryToMarkdown,
+  rebuildDay,
   type City,
   type Interest,
   type PlannedDay,
@@ -37,6 +38,15 @@ export function Planner() {
     window.setTimeout(() => {
       document.getElementById('plan-result')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 40);
+  };
+
+  const rebuild = (index: number) => {
+    if (!result) return;
+    const days = result.days.map((day, i) =>
+      i === index ? rebuildDay(result.city, result.days, index, interests) : day
+    );
+    setResult({ ...result, days });
+    setSaved(false);
   };
 
   const save = () => {
@@ -179,7 +189,12 @@ export function Planner() {
             <div className="plan-days">
               {result.days.map((day) => (
                 <article className="plan-day" key={day.day}>
-                  <div className="plan-day-no">Day {day.day}</div>
+                  <div className="plan-day-head">
+                    <span className="plan-day-no">Day {day.day}</span>
+                    <button type="button" className="plan-rebuild" onClick={() => rebuild(day.day - 1)}>
+                      Rebuild this day
+                    </button>
+                  </div>
                   {(['morning', 'afternoon', 'evening'] as const).map((slot) => {
                     const item = day[slot];
                     return (

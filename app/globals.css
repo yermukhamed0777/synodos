@@ -368,7 +368,14 @@ h1, h2, h3, p { margin-top: 0; }
 .budget small { font-size: 10px; color: var(--text-muted); }
 .plan-days { display: grid; gap: 14px; margin-top: 24px; }
 .plan-day { padding: 20px; border: 1px solid var(--line); border-radius: var(--r-md); background: rgba(255,255,255,0.025); }
-.plan-day-no { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em; color: var(--purple-bright); text-transform: uppercase; margin-bottom: 8px; }
+.plan-day-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.plan-day-no { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em; color: var(--purple-bright); text-transform: uppercase; }
+.plan-rebuild {
+  padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line-strong);
+  background: transparent; color: #c9c3d2; font-size: 10px; letter-spacing: 0.08em;
+  text-transform: uppercase; transition: border-color 160ms, color 160ms;
+}
+.plan-rebuild:hover { border-color: var(--purple-bright); color: var(--white); }
 .plan-slot { display: grid; grid-template-columns: 76px 1fr; gap: 14px; padding: 12px 0; border-top: 1px solid var(--line); }
 .plan-slot-label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); padding-top: 3px; }
 .plan-slot strong { display: block; font-size: 14px; }

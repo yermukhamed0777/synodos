@@ -137,6 +137,37 @@ export function buildItinerary(city: City, nights: number, interests: Interest[]
   return days;
 }
 
+/**
+ * Rebuild a single day while keeping every other day untouched.
+ * This is the "one change should not invalidate the whole trip" behaviour.
+ */
+export function rebuildDay(
+  city: City,
+  currentDays: PlannedDay[],
+  index: number,
+  interests: Interest[]
+): PlannedDay {
+  const score = (item: Item) => item.tags.filter((t) => interests.includes(t)).length;
+  const usedElsewhere = new Set(
+    currentDays
+      .filter((_, i) => i !== index)
+      .flatMap((d) => [d.morning.title, d.afternoon.title, d.evening.title])
+  );
+  const current = currentDays[index];
+  const slots: Slot[] = ['morning', 'afternoon', 'evening'];
+  const picks: Record<Slot, Item> = {} as Record<Slot, Item>;
+
+  slots.forEach((slot) => {
+    const candidates = city.items
+      .filter((i) => i.slot === slot && !usedElsewhere.has(i.title) && i.title !== current[slot].title)
+      .sort((a, b) => score(b) - score(a) || a.price - b.price);
+    const fallback = city.items.filter((i) => i.slot === slot && !usedElsewhere.has(i.title));
+    picks[slot] = candidates[0] ?? fallback[0] ?? current[slot];
+  });
+
+  return { day: current.day, ...picks };
+}
+
 export function estimateBudget(city: City, days: number, travellers: number) {
   const low = Math.round(city.dailyBudget * days * travellers * 0.8);
   const high = Math.round(city.dailyBudget * days * travellers * 1.35);

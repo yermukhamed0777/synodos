@@ -1,17 +1,30 @@
 # Synodos
 
-Synodos is an AI travel companion for the whole journey — before, during and after a trip. Single-page marketing site built with Next.js.
+Synodos is an AI travel companion concept — before, during and after a trip. This repo is the marketing site plus a working planner prototype.
+
+## Live
+
+https://yermukhamed0777.github.io/synodos/
 
 ## Stack
 
-- Next.js 16 (App Router)
-- React 19
-- TypeScript
+- Next.js 16 (App Router, static export)
+- React 19 + TypeScript
 - Plain CSS design system (no UI framework)
+- GitHub Pages via `.github/workflows/deploy-pages.yml`
+
+## What works
+
+- **Planner** (`/planner`): city + days + travellers + interests → day-by-day draft, estimated budget, save / copy / download. Per-day rebuild keeps the rest of the trip intact.
+- **Waitlist**: posts to a real email relay (FormSubmit). The owner must click the one-time activation email on the first submission.
+- **Scroll reveals**: IntersectionObserver choreography with `prefers-reduced-motion` support.
+- **Concept modal**, sticky nav, mobile menu.
+
+The planner uses a curated dataset for Tokyo, Lisbon, Bali and Paris. It does not query live inventory or make bookings — that is the next phase.
 
 ## Design
 
-Modern brutalist: hard borders, flat red / white / purple blocks, oversized uppercase type, square corners, no gradients.
+Dark cinematic: red `#e2231a`, white `#f7f5f7`, purple `#8a4fd6`. Generated WebP hero imagery in `public/assets/images/`.
 
 ## Run locally
 
@@ -20,11 +33,9 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000
+Note: `basePath` is `/synodos` for GitHub Pages. Locally the app is served at `http://localhost:3000/synodos/`.
 
-## Build
+## Docs
 
-```bash
-npm run build
-npm start
-```
+- `docs/PRODUCT_RESEARCH.md` — architecture, LLM economics, travel APIs, GDPR, phased plan
+- `docs/CONSUMER_RESEARCH.md` — 2026 traveller expectations, willingness to pay, feature priorities
