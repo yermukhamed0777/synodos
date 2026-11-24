@@ -3,6 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "description": "Synodos desktop demo — the trip planner, offline.",
+  "author": {
+    "name": "TUKTIBAY Yermukhamed",
+    "email": "erm1ham3d2604@gmail.com"
+  },
+  "homepage": "https://yermukhamed0777.github.io/synodos/",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -40,6 +45,7 @@
     "linux": {
       "target": ["AppImage", "deb"],
       "category": "Travel",
+      "maintainer": "TUKTIBAY Yermukhamed <erm1ham3d2604@gmail.com>",
       "artifactName": "Synodos-${version}-linux-${arch}.${ext}"
     }
   }
