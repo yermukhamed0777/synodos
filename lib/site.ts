@@ -18,7 +18,7 @@ export const NAV_ITEMS = [
   { label: 'About', href: '#about' },
 ] as const;
 
-export const TRUST = ['Google', 'Booking.com', 'Tripadvisor', 'Expedia', 'AirAsia'] as const;
+export const TRUST_NOTE = 'Private beta · Concept preview · No live booking yet';
 
 export const HERO_ALERTS = [
   { id: 'flight', icon: 'flight', title: 'Flight to Tokyo', detail: 'JL 520 · 12 Apr · 18:30', status: 'On time', tone: 'red' as const },
@@ -40,11 +40,10 @@ export const TRIP_ROWS = [
 ] as const;
 
 export const FEATURE_BAR = [
-  { icon: 'spark', title: 'AI Powered', body: 'Smart recommendations just for you.' },
-  { icon: 'clock', title: 'Real-time Updates', body: 'Flights, gates, weather and more.' },
-  { icon: 'globe', title: 'All-in-One', body: 'Everything in one place, always organized.' },
-  { icon: 'shield', title: 'Safe & Private', body: 'Your data is protected end-to-end.' },
-  { icon: 'headset', title: 'Always There', body: '24/7 support wherever you are.' },
+  { icon: 'spark', title: 'Grounded', body: 'Plans come from a curated city dataset, not model memory.' },
+  { icon: 'clock', title: 'Budget-aware', body: 'Every stop carries an estimated cost before you commit.' },
+  { icon: 'globe', title: 'Rebuild one day', body: 'Change a single day without losing the rest of the trip.' },
+  { icon: 'shield', title: 'Private by default', body: 'No feed, no tracking, no resale of your plans.' },
 ] as const;
 
 export const TECHNOLOGY_STEPS = [

@@ -1,5 +1,5 @@
 import { ConceptModal } from '@/components/ui/ConceptModal';
-import { asset, BASE_PATH, HERO_ALERTS, TRIP_ROWS, TRUST, FEATURE_BAR } from '@/lib/site';
+import { asset, BASE_PATH, HERO_ALERTS, TRIP_ROWS, TRUST_NOTE, FEATURE_BAR } from '@/lib/site';
 
 const ICONS: Record<string, string> = { flight: '✈', hotel: '▦', weather: '◍' };
 
@@ -25,14 +25,12 @@ export function Hero() {
             </div>
 
             <div className="hero-note">
-              <span className="eyebrow eyebrow--purple">Trusted by travellers worldwide</span>
-              <div className="trust-row">
-                {TRUST.map((name) => <span key={name}>{name}</span>)}
-              </div>
+              <span className="eyebrow eyebrow--purple">{TRUST_NOTE}</span>
             </div>
           </div>
 
-          <div className="alert-stack" aria-label="Live travel updates preview">
+          <div className="alert-stack" aria-label="Concept preview of travel updates">
+            <span className="preview-label">Concept preview — not live data</span>
             {HERO_ALERTS.map((a) => (
               <div className="glass-card alert" key={a.id}>
                 <span className={`alert-icon ${a.tone === 'purple' ? 'alert-icon--purple' : a.tone === 'neutral' ? 'alert-icon--neutral' : ''}`} aria-hidden="true">{ICONS[a.icon]}</span>

@@ -21,6 +21,7 @@ export function HowItWorks() {
 
         <div className="band-grid" style={{ marginTop: 56, gridTemplateColumns: 'minmax(0, 1fr) 360px' }}>
           <div style={{ display: 'grid', gap: 12, maxWidth: 460 }}>
+            <span className="preview-label">Concept preview — not live data</span>
             {HERO_ALERTS.map((a) => (
               <div className="glass-card alert" key={a.id}>
                 <span className={`alert-icon ${a.tone === 'purple' ? 'alert-icon--purple' : a.tone === 'neutral' ? 'alert-icon--neutral' : ''}`} aria-hidden="true">{ICONS[a.icon]}</span>
