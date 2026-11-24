@@ -42,9 +42,7 @@ export function Planner() {
 
   const rebuild = (index: number) => {
     if (!result) return;
-    const days = result.days.map((day, i) =>
-      i === index ? rebuildDay(result.city, result.days, index, interests) : day
-    );
+    const days = rebuildDay(result.city, result.days, index, interests);
     setResult({ ...result, days });
     setSaved(false);
   };

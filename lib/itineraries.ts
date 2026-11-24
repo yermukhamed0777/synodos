@@ -146,26 +146,35 @@ export function rebuildDay(
   currentDays: PlannedDay[],
   index: number,
   interests: Interest[]
-): PlannedDay {
+): PlannedDay[] {
   const score = (item: Item) => item.tags.filter((t) => interests.includes(t)).length;
-  const usedElsewhere = new Set(
-    currentDays
-      .filter((_, i) => i !== index)
-      .flatMap((d) => [d.morning.title, d.afternoon.title, d.evening.title])
-  );
-  const current = currentDays[index];
   const slots: Slot[] = ['morning', 'afternoon', 'evening'];
-  const picks: Record<Slot, Item> = {} as Record<Slot, Item>;
+  // Deep-ish copy so the caller's state is never mutated.
+  const days = currentDays.map((d) => ({ ...d }));
 
   slots.forEach((slot) => {
+    const current = days[index][slot];
     const candidates = city.items
-      .filter((i) => i.slot === slot && !usedElsewhere.has(i.title) && i.title !== current[slot].title)
+      .filter((i) => i.slot === slot && i.title !== current.title)
       .sort((a, b) => score(b) - score(a) || a.price - b.price);
-    const fallback = city.items.filter((i) => i.slot === slot && !usedElsewhere.has(i.title));
-    picks[slot] = candidates[0] ?? fallback[0] ?? current[slot];
+    const pick = candidates[0];
+    if (!pick) return;
+
+    // If the better pick already sits on another day, swap it with this day's
+    // current item so no stop is duplicated and the rest of the trip survives.
+    for (let di = 0; di < days.length; di += 1) {
+      if (di === index) continue;
+      for (const s of slots) {
+        if (days[di][s].title === pick.title) {
+          days[di][s] = current;
+          break;
+        }
+      }
+    }
+    days[index][slot] = pick;
   });
 
-  return { day: current.day, ...picks };
+  return days;
 }
 
 export function estimateBudget(city: City, days: number, travellers: number) {
