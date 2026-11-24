@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { BASE_PATH } from '@/lib/site';
+import { formatMinutes, validatePlan } from '@/lib/feasibility';
 import {
   budgetBreakdown,
   buildItinerary,
@@ -25,6 +26,11 @@ export function Planner() {
   const [nights, setNights] = useState(3);
   const [travellers, setTravellers] = useState(2);
   const [dailyBudget, setDailyBudget] = useState(150);
+  const [startDate, setStartDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 30);
+    return d.toISOString().slice(0, 10);
+  });
   const [recommendation, setRecommendation] = useState('');
   const [interests, setInterests] = useState<Interest[]>(['food', 'culture']);
   const [result, setResult] = useState<Result>(null);
@@ -102,6 +108,10 @@ export function Planner() {
   const budget = result ? estimateBudget(result.city, result.days.length, result.travellers) : null;
   const breakdown = result ? budgetBreakdown(result.city, result.days.length, result.travellers) : [];
   const handoffs = result ? handoffLinks(result.city) : [];
+  const check = useMemo(
+    () => (result ? validatePlan(result.city, result.days, startDate) : null),
+    [result, startDate]
+  );
 
   return (
     <div className="planner">
@@ -169,7 +179,11 @@ export function Planner() {
 
         <div className="planner-step">
           <span className="step-no">02 / Trip shape</span>
-          <div className="planner-row">
+          <div className="planner-row planner-row--3">
+            <label className="planner-field">
+              <span>Start date</span>
+              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+            </label>
             <label className="planner-field">
               <span>Days</span>
               <select value={nights} onChange={(e) => setNights(Number(e.target.value))}>
@@ -258,20 +272,44 @@ export function Planner() {
               ))}
             </div>
 
+            {check && (
+              <div className={`feasibility ${check.totalWarnings > 0 ? 'has-warn' : 'is-ok'}`} role="status">
+                <strong>{check.feasibleDays} / {check.days.length} days feasible</strong>
+                <span>{check.totalWarnings > 0 ? `${check.totalWarnings} timing warnings` : 'No timing conflicts found'}</span>
+              </div>
+            )}
+
             <div className="plan-days">
-              {result.days.map((day) => (
+              {result.days.map((day) => {
+                const dc = check?.days.find((c) => c.day === day.day);
+                return (
                 <article className="plan-day" key={day.day}>
                   <div className="plan-day-head">
                     <span className="plan-day-no">Day {day.day}</span>
-                    <button type="button" className="plan-rebuild" onClick={() => rebuild(day.day - 1)}>
-                      Rebuild this day
-                    </button>
+                    <div className="plan-day-actions">
+                      <span className={`day-status ${dc?.feasible ? 'ok' : 'warn'}`}>
+                        {dc?.feasible ? 'Feasible' : `${dc?.warnings.length ?? 0} warnings`}
+                      </span>
+                      <button type="button" className="plan-rebuild" onClick={() => rebuild(day.day - 1)}>
+                        Rebuild this day
+                      </button>
+                    </div>
                   </div>
+                  {dc && dc.warnings.length > 0 && (
+                    <ul className="day-warnings">
+                      {dc.warnings.map((w) => <li key={w}>{w}</li>)}
+                    </ul>
+                  )}
                   {(['morning', 'afternoon', 'evening'] as const).map((slot) => {
                     const item = day[slot];
+                    const leg = dc?.legs.find((l) => l.slot === slot);
                     return (
                       <div className="plan-slot" key={slot}>
-                        <span className="plan-slot-label">{slot}</span>
+                        <span className="plan-slot-label">
+                          {slot}
+                          {leg && <em>{formatMinutes(leg.arrival)}–{formatMinutes(leg.end)}</em>}
+                          {leg && leg.travelFromPrev > 0 && <em>{leg.travelFromPrev} min transfer</em>}
+                        </span>
                         <div>
                           <strong>{item.title}</strong>
                           <p>{item.detail}</p>
@@ -285,7 +323,8 @@ export function Planner() {
                     );
                   })}
                 </article>
-              ))}
+                );
+              })}
             </div>
 
             <div className="plan-actions">
