@@ -45,7 +45,7 @@ export function Planner() {
     const best = scored[0].city;
     setCityId(best.id);
     setRecommendation(
-      `${best.name} fits a ${dailyBudget} ${best.currency}/day budget and your ${interests.length ? interests.join(', ') : 'open'} preferences.`
+      `${best.name} fits a $${dailyBudget}/day budget and your ${interests.length ? interests.join(', ') : 'open'} preferences.`
     );
   };
 
@@ -151,7 +151,7 @@ export function Planner() {
           ) : (
             <div className="choose-box">
               <label className="planner-field">
-                <span>Budget per day</span>
+                <span>Budget per day (USD)</span>
                 <select value={dailyBudget} onChange={(e) => setDailyBudget(Number(e.target.value))}>
                   {[80, 120, 180, 250].map((b) => <option key={b} value={b}>{b} per day</option>)}
                 </select>
@@ -206,8 +206,9 @@ export function Planner() {
           Build my plan <span aria-hidden="true">→</span>
         </button>
         <p className="form-note">
-          Prototype planner: plans are assembled from a curated city dataset. No booking is made and
-          no live prices are shown.
+          Prototype planner: plans are assembled from a curated city dataset. Budget ranges are
+          USD-equivalent; individual stop prices are in local currency. No booking is made and no
+          live prices are shown.
         </p>
       </div>
 
@@ -252,7 +253,7 @@ export function Planner() {
                 <div className="budget-line" key={line.label}>
                   <span className="budget-label">{line.label}</span>
                   <div className="budget-bar" aria-hidden="true"><i style={{ width: `${line.share * 100}%` }} /></div>
-                  <span className="budget-value">{line.low}–{line.high} {result.city.currency}</span>
+                  <span className="budget-value">{line.low}–{line.high} {budget?.currency ?? 'USD'}</span>
                 </div>
               ))}
             </div>

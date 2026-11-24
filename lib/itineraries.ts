@@ -15,7 +15,9 @@ export type City = {
   name: string;
   country: string;
   tagline: string;
+  /** Local currency for individual stop prices. */
   currency: string;
+  /** Typical on-ground spend per person per day, in USD-equivalent. */
   dailyBudget: number;
   /** Date the curated dataset was last checked by a human. */
   verifiedAt: string;
@@ -190,7 +192,9 @@ export function rebuildDay(
 export function estimateBudget(city: City, days: number, travellers: number) {
   const low = Math.round(city.dailyBudget * days * travellers * 0.8);
   const high = Math.round(city.dailyBudget * days * travellers * 1.35);
-  return { low, high, currency: city.currency };
+  // dailyBudget is USD-equivalent, so the aggregate is shown in USD rather than
+  // mislabelling it in the city's local currency.
+  return { low, high, currency: 'USD' };
 }
 
 const SHARES: { label: string; share: number }[] = [
