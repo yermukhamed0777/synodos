@@ -34,7 +34,15 @@ export function ScrollReveal() {
     );
 
     targets.forEach((el) => io.observe(el));
-    return () => io.disconnect();
+
+    // Printing or exporting the page should never capture hidden sections.
+    const revealAll = () => targets.forEach((el) => el.classList.add('reveal--in'));
+    window.addEventListener('beforeprint', revealAll);
+
+    return () => {
+      io.disconnect();
+      window.removeEventListener('beforeprint', revealAll);
+    };
   }, []);
 
   return null;
