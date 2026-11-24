@@ -4,12 +4,14 @@ import { useState } from 'react';
 
 type Status = 'idle' | 'loading' | 'error' | 'done';
 
+const ENDPOINT = 'https://formsubmit.co/ajax/erm1ham3d2604@gmail.com';
+
 export function WaitlistForm() {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<Status>('idle');
   const [message, setMessage] = useState('');
 
-  const submit = (e: React.FormEvent<HTMLFormElement>) => {
+  const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const value = email.trim();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
@@ -17,19 +19,28 @@ export function WaitlistForm() {
       setMessage('Enter a valid email address so we can reach you.');
       return;
     }
+
     setStatus('loading');
-    // Demo behaviour: stored locally until a real backend is connected.
-    window.setTimeout(() => {
-      try {
-        const prior = JSON.parse(window.localStorage.getItem('synodos_waitlist') ?? '[]') as string[];
-        if (!prior.includes(value)) window.localStorage.setItem('synodos_waitlist', JSON.stringify([...prior, value]));
-        setStatus('done');
-        setMessage('You’re on the list. We’ll reach out when your spot is ready.');
-      } catch {
-        setStatus('error');
-        setMessage('Could not save locally. Please try again or email hello@synodos.app.');
-      }
-    }, 650);
+    try {
+      const res = await fetch(ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          email: value,
+          name: 'Synodos waitlist',
+          message: `New Synodos early-access request from ${value}`,
+          _subject: 'Synodos — new early-access request',
+          _template: 'table',
+          _captcha: 'false',
+        }),
+      });
+      if (!res.ok) throw new Error(`Request failed (${res.status})`);
+      setStatus('done');
+      setMessage('You’re on the list. We’ll email you when your spot is ready.');
+    } catch {
+      setStatus('error');
+      setMessage('Could not submit right now. Please email hello@synodos.app directly.');
+    }
   };
 
   if (status === 'done') {
@@ -38,7 +49,7 @@ export function WaitlistForm() {
         <i aria-hidden="true">✓</i>
         <div>
           <strong>You’re on the list.</strong>
-          <div className="form-note">{message} Saved on this device for now.</div>
+          <div className="form-note">{message}</div>
         </div>
       </div>
     );
@@ -63,9 +74,12 @@ export function WaitlistForm() {
         <span className="field-error" id="waitlist-error" role="alert">{status === 'error' ? message : ''}</span>
       </div>
       <button type="submit" className="btn btn--primary" disabled={status === 'loading'} style={{ width: '100%', marginTop: 8 }}>
-        {status === 'loading' ? 'Saving…' : 'Request access'} <span aria-hidden="true">→</span>
+        {status === 'loading' ? 'Sending…' : 'Request access'} <span aria-hidden="true">→</span>
       </button>
-      <p className="form-note">Demo form — entries are saved in this browser only. No email is sent yet.</p>
+      <p className="form-note">
+        Your address is sent to our inbox via FormSubmit. First signup requires one confirmation
+        click from the owner’s email. No tracking, no resale.
+      </p>
     </form>
   );
 }

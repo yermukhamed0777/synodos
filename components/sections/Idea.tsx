@@ -1,4 +1,4 @@
-import { asset, JOURNEY_ALERTS } from '@/lib/site';
+import { asset, BASE_PATH, JOURNEY_ALERTS } from '@/lib/site';
 
 export function Idea() {
   return (
@@ -14,7 +14,7 @@ export function Idea() {
               during and after every trip. From the first idea to the moment you return home.
             </p>
             <div className="hero-actions" style={{ marginTop: 28 }}>
-              <a href="#experience" className="btn btn--primary">Start the Journey <span aria-hidden="true">→</span></a>
+              <a href={`${BASE_PATH}/planner/`} className="btn btn--primary">Start the Journey <span aria-hidden="true">→</span></a>
             </div>
           </div>
 

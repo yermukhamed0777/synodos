@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { NAV_ITEMS } from '@/lib/site';
+import { BASE_PATH, NAV_ITEMS } from '@/lib/site';
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -17,18 +17,19 @@ export function Navbar() {
   return (
     <header className={`nav ${scrolled ? 'nav--scrolled' : ''}`}>
       <div className="wrap nav-inner">
-        <a href="#top" className="wordmark" aria-label="Synodos — back to top">
+        <a href={`${BASE_PATH}/`} className="wordmark" aria-label="Synodos — home">
           <span className="wordmark-mark" aria-hidden="true" /> SYNODOS
         </a>
 
         <nav className="nav-links" aria-label="Main navigation">
           {NAV_ITEMS.map((item) => (
-            <a key={item.href} href={item.href}>{item.label}</a>
+            <a key={item.href} href={`${BASE_PATH}/${item.href}`}>{item.label}</a>
           ))}
+          <a href={`${BASE_PATH}/planner/`}>Planner</a>
         </nav>
 
         <div className="nav-actions">
-          <a href="#waitlist" className="btn btn--primary btn--small nav-cta">
+          <a href={`${BASE_PATH}/#waitlist`} className="btn btn--primary btn--small nav-cta">
             Join Waitlist <span aria-hidden="true">→</span>
           </a>
           <button
@@ -46,9 +47,10 @@ export function Navbar() {
       {open && (
         <nav className="mobile-menu" aria-label="Mobile navigation">
           {NAV_ITEMS.map((item) => (
-            <a key={item.href} href={item.href} onClick={() => setOpen(false)}>{item.label}</a>
+            <a key={item.href} href={`${BASE_PATH}/${item.href}`} onClick={() => setOpen(false)}>{item.label}</a>
           ))}
-          <a href="#waitlist" onClick={() => setOpen(false)}>Join Waitlist</a>
+          <a href={`${BASE_PATH}/planner/`} onClick={() => setOpen(false)}>Planner</a>
+          <a href={`${BASE_PATH}/#waitlist`} onClick={() => setOpen(false)}>Join Waitlist</a>
         </nav>
       )}
     </header>

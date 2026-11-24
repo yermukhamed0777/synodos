@@ -1,5 +1,5 @@
 import { ConceptModal } from '@/components/ui/ConceptModal';
-import { asset, HERO_ALERTS, TRIP_ROWS, TRUST, FEATURE_BAR } from '@/lib/site';
+import { asset, BASE_PATH, HERO_ALERTS, TRIP_ROWS, TRUST, FEATURE_BAR } from '@/lib/site';
 
 const ICONS: Record<string, string> = { flight: '✈', hotel: '▦', weather: '◍' };
 
@@ -20,7 +20,7 @@ export function Hero() {
               Before you go, while you’re there, and when you return.
             </p>
             <div className="hero-actions">
-              <a href="#journey" className="btn btn--primary">Start Your Journey <span aria-hidden="true">→</span></a>
+              <a href={`${BASE_PATH}/planner/`} className="btn btn--primary">Start Your Journey <span aria-hidden="true">→</span></a>
               <ConceptModal />
             </div>
 
