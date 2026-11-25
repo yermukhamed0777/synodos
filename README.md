@@ -41,6 +41,10 @@ Note: `basePath` is `/synodos` for GitHub Pages. Locally the app is served at `h
 
 Unsigned macOS builds need right-click → Open on first launch.
 
+## Planning
+
+Long-term execution planning lives in [`plan/`](plan/README.md) — strategy, roadmap, backlog, decision log and session log. It is internal material; the status snapshot and update convention are in [`plan/README.md`](plan/README.md).
+
 ## Docs
 
 - `docs/PRODUCT_RESEARCH.md` — architecture, LLM economics, travel APIs, GDPR, phased plan
