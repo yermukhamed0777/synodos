@@ -61,3 +61,25 @@ Rules: append one entry per work session, including research/scoping-only sessio
 ### Open items mapped to backlog
 
 `P0-1` … `P0-10` all open; `P1-1` and `P1-2` blocked on a new publish decision; `M1-1` … `M2-3` and `M3-1` … `M3-3` open. Single next action: `P0-1`.
+
+## 2026-11-25 — Push and CI verification (same session, verification-only follow-up)
+
+### What changed
+
+- Appended this entry and the CI result to the status snapshot in `plan/README.md`. No other files changed; no source code fixed.
+
+### Exact commands and results
+
+| Command | Result |
+|---|---|
+| `git add README.md plan; git commit -m "Add long-term plan folder with strategy, roadmap, backlog and append-only logs"` | `[main 39c44e4]`, `7 files changed, 414 insertions(+)`. Git warned that LF will be normalised to CRLF in the working copy for the six `plan/*.md` files. |
+| `git push origin main` | `PUSH_EXIT=0`, `0ff3139..39c44e4 main -> main`. A `git-credential-manager.exe ... No such file or directory` warning appeared on stderr but did not fail the push. |
+| `git rev-parse HEAD` | `39c44e4de08f044c1fa9ebaf3e9ec784cf36f3c9`. |
+| `git ls-remote origin refs/heads/main` | `39c44e4de08f044c1fa9ebaf3e9ec784cf36f3c9 refs/heads/main` — remote HEAD equals local HEAD. |
+| `git status --short --branch` | `## main...origin/main`, clean. |
+| `gh run list --limit 5` | New run `45625449117`, `Deploy Synodos to GitHub Pages`, `main`, push, initially `queued`; previous runs all `completed success`. |
+| `gh run watch 45625449117 --exit-status` | `WATCH_EXIT=0`; `build` ✓ in 33 s (checkout, setup-node, `npm ci`, `npm run build`, configure-pages, upload-pages-artifact), `deploy` ✓ in 11 s. Annotation: **Node.js 20 is deprecated**; `checkout@v4`, `configure-pages@v5`, `setup-node@v4`, `upload-artifact@v4` were forced onto Node 24 by the runner. |
+
+### Open items
+
+Unchanged from the previous entry. The CI annotation is an environment/workflow observation, not a direction change, so no `decisions.md` row was added; record it under `P1-1` if the publish phase is re-opened.

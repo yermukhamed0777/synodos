@@ -22,6 +22,7 @@ This folder is the long-term execution record for Synodos. It is **internal plan
   - `out/index.html` → 42,979 bytes, 0 `fonts.googleapis`, 0 `fonts.gstatic`, 8 `.woff2` preloads (fonts are self-hosted), 1 `formsubmit` mention (disclosure text).
   - Environment: Node `v24.18.1`, npm `11.16.0` via `npm.cmd` (plain `npm` is blocked by PowerShell execution policy).
 - **Re-run at commit time (after all edits):** build **PASS**, exit 0, static generation 403 ms; lint **FAIL**, exit 1 (unchanged); audit **FAIL**, exit 1, 3 vulnerabilities (unchanged). Only `README.md` and new `plan/` files were modified.
+- **CI:** run `45625449117` (`Deploy Synodos to GitHub Pages`) **passed** — build ✓ 33 s, deploy ✓ 11 s. Annotation: runner forced Node-20-targeting actions onto Node 24 (Node 20 deprecated). Remote HEAD `39c44e4…` equals local HEAD at push time.
 - **Next action:** `P0-1` — replace the broken `lint` script and add a real `typecheck`/`lint` path, with `P0-2` (first tests) immediately after.
 
 ## Binding update convention
