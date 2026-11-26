@@ -213,3 +213,37 @@ release or account action was taken in this session.
 releases and the seven-day student pilot. Prices, transfer times and opening hours are documented as
 USD-equivalent estimates, deterministic straight-line estimates and curated facts checked
 2026-11-24 — never real-time availability. No usage, user or revenue result was measured.
+
+## 2026-11-26 - Push freeze and verify live deployment (F1-6)
+
+### What changed
+
+- Pushed the three freeze commits `e9e366f`, `0f744cf`, `0b42904` to `origin/main` after explicit
+  approval; the remote moved `87ea728..0b42904`.
+- GitHub Pages workflow run `45824968046` completed `success`; deployment `8085910174` reported
+  `success` for `0b42904` at `https://yermukhamed0777.github.io/synodos/`.
+- Verified the live bundle serves the new planner code: `/synodos/_next/static/chunks/3ntl1usl979s1.js`
+  returns 200 (29,997 bytes) and contains the "no attractions were invented" notice; live and local
+  chunk lists match.
+- A temporary probe branch `probe-freeze` was pushed to isolate a transport failure and deleted
+  immediately.
+- No source, dataset, workflow, dependency, tag, release, licence or Vercel change in this entry.
+
+### Exact commands and results
+
+| Command | Result |
+|---|---|
+| `git push origin main` (first attempts) | Failed: broken credential-helper path (`git-credential-manager.exe: No such file or directory`) and `curl 16/52` RPC errors. |
+| `git push origin 0b42904:refs/heads/probe-freeze` | Succeeded, proving the pack uploads; branch deleted after use. |
+| `git push origin main` (with `credential.helper=`, `!gh auth git-credential`, `http.version=HTTP/1.1`) | `87ea728..0b42904  main -> main`; `git ls-remote origin refs/heads/main` = `0b429041ce1a1466100d151f58592a92c9063bd3`. |
+| `gh run view 45824968046 --json ...` | `conclusion=success`, `headSha=0b429041...`; created `2026-11-26T13:00:35Z`, updated `13:01:33Z`; jobs `build=success`, `deploy=success`. |
+| `gh api repos/.../deployments?environment=github-pages` | Deployment `8085910174`, sha `0b42904`, created `2026-11-26T13:01:16Z`. |
+| `gh api .../deployments/8085910174/statuses` | Latest state `success`, `environment_url=https://yermukhamed0777.github.io/synodos/`, `2026-11-26T13:01:33Z`. |
+| `Invoke-WebRequest https://yermukhamed0777.github.io/synodos/` | `status=200`, 42,443 bytes; shell references the same 7 chunks as local `out/index.html`. |
+| `Invoke-WebRequest .../chunks/3ntl1usl979s1.js` | `status=200`, 29,997 bytes, contains "no attractions were invented". |
+
+### Open items
+
+Unchanged and human only: Vercel dashboard confirmation, signed desktop installers, the seven-day
+student pilot, and any account/consent decision. The "capped at three days" copy is still current and
+accurate in the source (`Planner.tsx:279`), so no copy change was needed.
