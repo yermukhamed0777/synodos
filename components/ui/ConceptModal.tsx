@@ -3,9 +3,9 @@
 import { useEffect, useState } from 'react';
 
 const STEPS = [
-  { n: '01', title: 'Tell us where', body: 'A destination, a date, a feeling — Synodos turns it into a real plan.' },
-  { n: '02', title: 'See it take shape', body: 'Flights, stays, weather and routes arrive as one coherent journey.' },
-  { n: '03', title: 'Travel with it', body: 'Changes and reminders land in the moment, with a clear next action.' },
+  { n: '01', title: 'Tell us where', body: 'A destination, a date and what you care about — Synodos builds a day-by-day draft.' },
+  { n: '02', title: 'See it take shape', body: 'Curated stops, a timing check and a USD-equivalent budget estimate arrive together.' },
+  { n: '03', title: 'Change one day', body: 'Rebuild a single day without losing the rest of the trip.' },
 ] as const;
 
 export function ConceptModal() {
@@ -21,7 +21,7 @@ export function ConceptModal() {
   return (
     <>
       <button type="button" className="btn btn--ghost" onClick={() => setOpen(true)}>
-        <span aria-hidden="true">▶</span> Watch Concept
+        <span aria-hidden="true">▸</span> See the concept
       </button>
 
       {open && (
