@@ -1,4 +1,4 @@
-import type { City, Item, PlannedDay } from './itineraries';
+import type { PlannedDay } from './itineraries';
 import { DEFAULT_META, VENUE_META, type VenueMeta } from './venue-meta';
 
 export type Leg = {
@@ -12,8 +12,14 @@ export type Leg = {
 
 export type DayCheck = {
   day: number;
+  date: string;
   weekday: number;
   feasible: boolean;
+  /** Constraints that make the day impossible. */
+  hard: string[];
+  /** Worth knowing, but the day is still possible. */
+  advisories: string[];
+  /** hard + advisories, retained for the existing UI. */
   warnings: string[];
   legs: Leg[];
 };
@@ -22,10 +28,14 @@ export type PlanCheck = {
   days: DayCheck[];
   feasibleDays: number;
   totalWarnings: number;
+  totalHard: number;
 };
 
 const SLOT_START = { morning: 8 * 60, afternoon: 13 * 60, evening: 18 * 60 } as const;
 const SLOT_LABEL = { morning: 'Morning', afternoon: 'Afternoon', evening: 'Evening' } as const;
+export const WEEKDAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as const;
+/** Transfers at or above this length are advisory, not impossible. */
+export const LONG_TRANSFER_MINUTES = 60;
 
 export function toMinutes(value: string) {
   const [h, m] = value.split(':').map(Number);
@@ -37,13 +47,24 @@ export function formatMinutes(value: number) {
   return `${String(Math.floor(v / 60)).padStart(2, '0')}:${String(v % 60).padStart(2, '0')}`;
 }
 
+/** UTC noon anchors avoid DST shifting a calendar date backwards or forwards. */
+export function dateForDay(startDate: string, index: number) {
+  const base = new Date(`${startDate}T12:00:00Z`);
+  base.setUTCDate(base.getUTCDate() + index);
+  return base.toISOString().slice(0, 10);
+}
+
+export function weekdayForDate(date: string) {
+  return new Date(`${date}T12:00:00Z`).getUTCDay();
+}
+
 function closeMinutes(meta: VenueMeta) {
   const open = toMinutes(meta.open);
   const close = toMinutes(meta.close);
   return close <= open ? close + 1440 : close;
 }
 
-function metaFor(item: Item): VenueMeta {
+function metaFor(item: PlannedDay['morning']): VenueMeta {
   return VENUE_META[item.title] ?? DEFAULT_META;
 }
 
@@ -65,9 +86,11 @@ export function travelMinutes(from: VenueMeta, to: VenueMeta) {
   return Math.max(8, Math.round((km / speed) * 60 + 10));
 }
 
-export function validateDay(city: City, day: PlannedDay, date: string): DayCheck {
-  const weekday = new Date(`${date}T12:00:00`).getDay();
-  const warnings: string[] = [];
+/** Validate one day against the date that day actually falls on. */
+export function validateDay(day: PlannedDay, date: string): DayCheck {
+  const weekday = weekdayForDate(date);
+  const hard: string[] = [];
+  const advisories: string[] = [];
   const legs: Leg[] = [];
   let prevMeta: VenueMeta | null = null;
   let prevEnd = 0;
@@ -79,6 +102,7 @@ export function validateDay(city: City, day: PlannedDay, date: string): DayCheck
     const close = closeMinutes(meta);
     const lastEntry = meta.lastEntry ? toMinutes(meta.lastEntry) : close - meta.duration;
     const latestStart = Math.min(close - meta.duration, lastEntry);
+    const lastEntryBinds = Boolean(meta.lastEntry) && lastEntry < close - meta.duration;
 
     const travel = prevMeta ? travelMinutes(prevMeta, meta) : 0;
     let arrival = Math.max(SLOT_START[slot], prevEnd + travel);
@@ -89,18 +113,24 @@ export function validateDay(city: City, day: PlannedDay, date: string): DayCheck
     }
 
     if (meta.closedDays.includes(weekday)) {
-      warnings.push(`${SLOT_LABEL[slot]}: ${item.title} is normally closed on this weekday.`);
+      hard.push(
+        `${SLOT_LABEL[slot]}: ${item.title} is closed on ${WEEKDAY_NAMES[weekday]} — this day needs a different stop.`
+      );
     }
     if (arrival > latestStart) {
-      warnings.push(
-        `${SLOT_LABEL[slot]}: ${item.title} — arriving ${formatMinutes(arrival)} leaves less than ${meta.duration} min before closing (${meta.close}).`
+      hard.push(
+        lastEntryBinds
+          ? `${SLOT_LABEL[slot]}: arriving ${formatMinutes(arrival)} is after last entry ${meta.lastEntry} at ${item.title}.`
+          : `${SLOT_LABEL[slot]}: ${item.title} — arriving ${formatMinutes(arrival)} leaves less than ${meta.duration} min before closing (${meta.close}).`
       );
     }
     if (arrival + meta.duration > close) {
-      warnings.push(`${SLOT_LABEL[slot]}: ${item.title} would run past closing at ${meta.close}.`);
+      hard.push(`${SLOT_LABEL[slot]}: ${item.title} would run past closing at ${meta.close}.`);
     }
-    if (travel >= 60) {
-      warnings.push(`${SLOT_LABEL[slot]}: ${travel} min transfer to ${item.title}. Consider splitting the day.`);
+    if (travel >= LONG_TRANSFER_MINUTES) {
+      advisories.push(
+        `${SLOT_LABEL[slot]}: ${travel} min transfer to ${item.title}. Long but possible — check live transit before you go.`
+      );
     }
 
     legs.push({
@@ -115,14 +145,24 @@ export function validateDay(city: City, day: PlannedDay, date: string): DayCheck
     prevEnd = arrival + meta.duration;
   });
 
-  return { day: day.day, weekday, feasible: warnings.length === 0, warnings, legs };
+  return {
+    day: day.day,
+    date,
+    weekday,
+    feasible: hard.length === 0,
+    hard,
+    advisories,
+    warnings: [...hard, ...advisories],
+    legs,
+  };
 }
 
-export function validatePlan(city: City, days: PlannedDay[], date: string): PlanCheck {
-  const checks = days.map((day) => validateDay(city, day, date));
+export function validatePlan(days: PlannedDay[], startDate: string): PlanCheck {
+  const checks = days.map((day, index) => validateDay(day, dateForDay(startDate, index)));
   return {
     days: checks,
     feasibleDays: checks.filter((c) => c.feasible).length,
     totalWarnings: checks.reduce((sum, c) => sum + c.warnings.length, 0),
+    totalHard: checks.reduce((sum, c) => sum + c.hard.length, 0),
   };
 }

@@ -1,8 +1,10 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { BASE_PATH } from '@/lib/site';
 import { formatMinutes, validatePlan } from '@/lib/feasibility';
+import { emit } from '@/lib/events';
+import { parseSavedPlan, SAVED_PLAN_KEY, serializeSavedPlan } from '@/lib/saved-plan';
 import {
   budgetBreakdown,
   buildItinerary,
@@ -12,6 +14,7 @@ import {
   INTERESTS,
   itineraryToMarkdown,
   mapLink,
+  maxDaysFor,
   rebuildDay,
   type City,
   type Interest,
@@ -39,6 +42,17 @@ export function Planner() {
 
   const city = useMemo(() => CITIES.find((c) => c.id === cityId) ?? CITIES[0], [cityId]);
 
+  // Restore a previously saved plan, ignoring corrupt or outdated payloads.
+  useEffect(() => {
+    const restored = parseSavedPlan(window.localStorage.getItem(SAVED_PLAN_KEY));
+    if (!restored) return;
+    setCityId(restored.city.id);
+    setNights(restored.days.length);
+    setTravellers(restored.travellers);
+    setResult(restored);
+    setSaved(true);
+  }, []);
+
   const toggleInterest = (id: Interest) =>
     setInterests((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
@@ -56,10 +70,11 @@ export function Planner() {
   };
 
   const generate = () => {
-    const days = buildItinerary(city, nights, interests);
+    const days = buildItinerary(city, nights, interests, startDate);
     setResult({ city, days, travellers });
     setSaved(false);
     setCopied(false);
+    emit('plan_generated');
     window.setTimeout(() => {
       document.getElementById('plan-result')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 40);
@@ -67,16 +82,18 @@ export function Planner() {
 
   const rebuild = (index: number) => {
     if (!result) return;
-    const days = rebuildDay(result.city, result.days, index, interests);
+    const days = rebuildDay(result.city, result.days, index, interests, startDate);
     setResult({ ...result, days });
     setSaved(false);
+    emit('plan_rebuilt');
   };
 
   const save = () => {
     if (!result) return;
     try {
-      window.localStorage.setItem('synodos_saved_plan', JSON.stringify(result));
+      window.localStorage.setItem(SAVED_PLAN_KEY, serializeSavedPlan(result));
       setSaved(true);
+      emit('plan_saved');
     } catch {
       setSaved(false);
     }
@@ -92,6 +109,7 @@ export function Planner() {
     a.download = `synodos-${result.city.id}-plan.md`;
     a.click();
     URL.revokeObjectURL(url);
+    emit('plan_downloaded');
   };
 
   const copy = async () => {
@@ -99,6 +117,7 @@ export function Planner() {
     try {
       await navigator.clipboard.writeText(itineraryToMarkdown(result.city, result.days, result.travellers));
       setCopied(true);
+      emit('plan_copied');
       window.setTimeout(() => setCopied(false), 1800);
     } catch {
       setCopied(false);
@@ -109,9 +128,10 @@ export function Planner() {
   const breakdown = result ? budgetBreakdown(result.city, result.days.length, result.travellers) : [];
   const handoffs = result ? handoffLinks(result.city) : [];
   const check = useMemo(
-    () => (result ? validatePlan(result.city, result.days, startDate) : null),
+    () => (result ? validatePlan(result.days, startDate) : null),
     [result, startDate]
   );
+  const dayOptions = Array.from({ length: Math.max(0, maxDaysFor(city) - 1) }, (_, i) => i + 2);
 
   return (
     <div className="planner">
@@ -187,7 +207,7 @@ export function Planner() {
             <label className="planner-field">
               <span>Days</span>
               <select value={nights} onChange={(e) => setNights(Number(e.target.value))}>
-                {[2, 3, 4, 5, 6, 7].map((n) => <option key={n} value={n}>{n} days</option>)}
+                {dayOptions.map((n) => <option key={n} value={n}>{n} days</option>)}
               </select>
             </label>
             <label className="planner-field">
@@ -220,9 +240,9 @@ export function Planner() {
           Build my plan <span aria-hidden="true">→</span>
         </button>
         <p className="form-note">
-          Prototype planner: plans are assembled from a curated city dataset. Budget ranges are
-          USD-equivalent; individual stop prices are in local currency. No booking is made and no
-          live prices are shown.
+          Prototype planner: plans are assembled from a curated city dataset. All money shown is a
+          USD-equivalent estimate — no live prices, FX conversion or booking is involved. Trips are
+          capped at three days, the longest the curated dataset can cover without repeating a stop.
         </p>
       </div>
 
@@ -273,9 +293,15 @@ export function Planner() {
             </div>
 
             {check && (
-              <div className={`feasibility ${check.totalWarnings > 0 ? 'has-warn' : 'is-ok'}`} role="status">
+              <div className={`feasibility ${check.totalHard > 0 ? 'has-warn' : 'is-ok'}`} role="status">
                 <strong>{check.feasibleDays} / {check.days.length} days feasible</strong>
-                <span>{check.totalWarnings > 0 ? `${check.totalWarnings} timing warnings` : 'No timing conflicts found'}</span>
+                <span>
+                  {check.totalHard > 0
+                    ? `${check.totalHard} hard conflicts · ${check.totalWarnings - check.totalHard} advisory notes`
+                    : check.totalWarnings > 0
+                      ? `${check.totalWarnings} advisory notes — all days still feasible`
+                      : 'No timing conflicts found'}
+                </span>
               </div>
             )}
 
@@ -316,7 +342,7 @@ export function Planner() {
                           <div className="plan-tags">
                             {item.tags.map((t) => <span key={t}>{t}</span>)}
                             <a className="plan-map" href={mapLink(result.city, item)} target="_blank" rel="noreferrer">Map ↗</a>
-                            <em>~{item.price} {result.city.currency}</em>
+                            <em>~${item.price} USD</em>
                           </div>
                         </div>
                       </div>

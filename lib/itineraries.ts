@@ -1,3 +1,5 @@
+import { DEFAULT_META, VENUE_META } from './venue-meta';
+
 export type Slot = 'morning' | 'afternoon' | 'evening';
 
 export type Interest = 'food' | 'culture' | 'nature' | 'nightlife' | 'shopping' | 'relax';
@@ -7,6 +9,7 @@ export type Item = {
   detail: string;
   slot: Slot;
   tags: Interest[];
+  /** USD-equivalent estimate, not a local-currency price. No FX conversion is performed. */
   price: number;
 };
 
@@ -15,8 +18,6 @@ export type City = {
   name: string;
   country: string;
   tagline: string;
-  /** Local currency for individual stop prices. */
-  currency: string;
   /** Typical on-ground spend per person per day, in USD-equivalent. */
   dailyBudget: number;
   /** Date the curated dataset was last checked by a human. */
@@ -43,7 +44,6 @@ export const CITIES: City[] = [
     name: 'Tokyo',
     country: 'Japan',
     tagline: 'Neon calm, old temples, late-night noodles.',
-    currency: 'JPY',
     dailyBudget: 145,
     verifiedAt: '2026-11-24',
     items: [
@@ -63,7 +63,6 @@ export const CITIES: City[] = [
     name: 'Lisbon',
     country: 'Portugal',
     tagline: 'Tiled hills, Atlantic light, custard tarts.',
-    currency: 'EUR',
     dailyBudget: 105,
     verifiedAt: '2026-11-24',
     items: [
@@ -83,7 +82,6 @@ export const CITIES: City[] = [
     name: 'Bali',
     country: 'Indonesia',
     tagline: 'Rice terraces, reef breaks, long slow afternoons.',
-    currency: 'IDR',
     dailyBudget: 78,
     verifiedAt: '2026-11-24',
     items: [
@@ -103,7 +101,6 @@ export const CITIES: City[] = [
     name: 'Paris',
     country: 'France',
     tagline: 'Bakery mornings, long walks, one perfect museum.',
-    currency: 'EUR',
     dailyBudget: 165,
     verifiedAt: '2026-11-24',
     items: [
@@ -127,26 +124,93 @@ export type PlannedDay = {
   evening: Item;
 };
 
-export function buildItinerary(city: City, nights: number, interests: Interest[]): PlannedDay[] {
-  const score = (item: Item) => item.tags.filter((t) => interests.includes(t)).length;
-  const slots: Slot[] = ['morning', 'afternoon', 'evening'];
-  const used = new Set<string>();
-  const days: PlannedDay[] = [];
+export const SLOTS: Slot[] = ['morning', 'afternoon', 'evening'];
 
-  for (let d = 0; d < nights; d += 1) {
-    const picks: Record<Slot, Item> = {} as Record<Slot, Item>;
-    slots.forEach((slot) => {
-      const pool = city.items
-        .filter((i) => i.slot === slot && !used.has(i.title))
-        .sort((a, b) => score(b) - score(a) || a.price - b.price);
-      const fallback = city.items.filter((i) => i.slot === slot);
-      const chosen = pool[0] ?? fallback[d % fallback.length];
+function closedOn(item: Item, date: string | undefined): boolean {
+  if (!date) return false;
+  const weekday = new Date(`${date}T12:00:00Z`).getUTCDay();
+  return (VENUE_META[item.title] ?? DEFAULT_META).closedDays.includes(weekday);
+}
+
+function dayDate(startDate: string | undefined, index: number): string | undefined {
+  if (!startDate) return undefined;
+  const d = new Date(`${startDate}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + index);
+  return d.toISOString().slice(0, 10);
+}
+
+const SLOT_START_MINUTES: Record<Slot, number> = { morning: 8 * 60, afternoon: 13 * 60, evening: 18 * 60 };
+
+function minutes(value: string) {
+  const [h, m] = value.split(':').map(Number);
+  return h * 60 + m;
+}
+
+/** Can this stop fit its slot at all, using curated hours and visit length? */
+function fitsSlot(item: Item, slot: Slot): boolean {
+  const meta = VENUE_META[item.title] ?? DEFAULT_META;
+  const open = minutes(meta.open);
+  const rawClose = minutes(meta.close);
+  const close = rawClose <= open ? rawClose + 1440 : rawClose;
+  const start = Math.max(SLOT_START_MINUTES[slot], open);
+  if (meta.lastEntry && start > minutes(meta.lastEntry)) return false;
+  return start + meta.duration <= close;
+}
+
+/**
+ * The curated dataset holds a finite number of distinct stops per slot.
+ * Trip length is clamped to that number rather than inventing data or
+ * silently repeating a stop on a longer trip.
+ */
+export function maxDaysFor(city: City): number {
+  return Math.min(
+    ...SLOTS.map((slot) => city.items.filter((i) => i.slot === slot && fitsSlot(i, slot)).length)
+  );
+}
+
+export function buildItinerary(
+  city: City,
+  nights: number,
+  interests: Interest[],
+  startDate?: string
+): PlannedDay[] {
+  const score = (item: Item) => item.tags.filter((t) => interests.includes(t)).length;
+  const used = new Set<string>();
+  const total = Math.max(0, Math.min(nights, maxDaysFor(city)));
+  const dates = Array.from({ length: total }, (_, d) => dayDate(startDate, d));
+  const picksByDay = Array.from(
+    { length: total },
+    () => ({}) as Record<Slot, Item>
+  );
+
+  SLOTS.forEach((slot) => {
+    const items = city.items.filter((i) => i.slot === slot);
+    const openDayCount = (item: Item) => dates.filter((date) => !date || !closedOn(item, date)).length;
+
+    // Fill the most constrained date first, with the most constrained stop,
+    // so a stop that is closed on Sunday is not forced onto Sunday.
+    const dateOrder = dates
+      .map((date, d) => ({
+        d,
+        choices: items.filter((i) => !closedOn(i, date) && fitsSlot(i, slot)).length,
+      }))
+      .sort((a, b) => a.choices - b.choices || a.d - b.d);
+
+    dateOrder.forEach(({ d }) => {
+      const date = dates[d];
+      const available = items.filter((i) => !used.has(i.title));
+      const open = available.filter((i) => !closedOn(i, date) && fitsSlot(i, slot));
+      const pool = open.length ? open : available;
+      const chosen = [...pool].sort(
+        (a, b) => openDayCount(a) - openDayCount(b) || score(b) - score(a) || a.price - b.price
+      )[0];
+      if (!chosen) throw new Error(`Not enough curated stops for ${slot} in ${city.name}`);
       used.add(chosen.title);
-      picks[slot] = chosen;
+      picksByDay[d][slot] = chosen;
     });
-    days.push({ day: d + 1, ...picks });
-  }
-  return days;
+  });
+
+  return picksByDay.map((picks, i) => ({ day: i + 1, ...picks }));
 }
 
 /**
@@ -157,33 +221,46 @@ export function rebuildDay(
   city: City,
   currentDays: PlannedDay[],
   index: number,
-  interests: Interest[]
+  interests: Interest[],
+  startDate?: string
 ): PlannedDay[] {
+  if (index < 0 || index >= currentDays.length) return currentDays;
   const score = (item: Item) => item.tags.filter((t) => interests.includes(t)).length;
-  const slots: Slot[] = ['morning', 'afternoon', 'evening'];
   // Deep-ish copy so the caller's state is never mutated.
   const days = currentDays.map((d) => ({ ...d }));
+  const date = dayDate(startDate, index);
 
-  slots.forEach((slot) => {
+  SLOTS.forEach((slot) => {
     const current = days[index][slot];
-    const candidates = city.items
-      .filter((i) => i.slot === slot && i.title !== current.title)
+    const alternatives = city.items.filter((i) => i.slot === slot && i.title !== current.title);
+    const open = alternatives.filter((i) => !closedOn(i, date) && fitsSlot(i, slot));
+    const candidates = (open.length ? open : alternatives)
       .sort((a, b) => score(b) - score(a) || a.price - b.price);
     const pick = candidates[0];
     if (!pick) return;
 
-    // If the better pick already sits on another day, swap it with this day's
-    // current item so no stop is duplicated and the rest of the trip survives.
-    for (let di = 0; di < days.length; di += 1) {
+    // If the preferred stop already sits on another day, swap it with this
+    // day's current stop. No stop is duplicated and no day is lost — the rest
+    // of the trip is rebalanced rather than discarded. A swap that would put
+    // the current stop on a closed day is rejected.
+    let placed = !days.some(
+      (d, di) => di !== index && SLOTS.some((s) => d[s].title === pick.title)
+    );
+    for (let di = 0; di < days.length && !placed; di += 1) {
       if (di === index) continue;
-      for (const s of slots) {
-        if (days[di][s].title === pick.title) {
+      for (const s of SLOTS) {
+        if (
+          days[di][s].title === pick.title &&
+          !closedOn(current, dayDate(startDate, di)) &&
+          fitsSlot(current, s)
+        ) {
           days[di][s] = current;
+          placed = true;
           break;
         }
       }
     }
-    days[index][slot] = pick;
+    if (placed) days[index][slot] = pick;
   });
 
   return days;
