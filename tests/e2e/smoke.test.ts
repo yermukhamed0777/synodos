@@ -10,7 +10,9 @@ test('built site, planner and privacy page work in a real browser', async (t) =>
     await new Promise<void>((resolve) => server.close(() => resolve()));
   });
 
-  const page = await browser.newPage();
+  const context = await browser.newContext({ permissions: ['clipboard-read', 'clipboard-write'] });
+  t.after(async () => context.close());
+  const page = await context.newPage();
   const consoleErrors: string[] = [];
   const external: string[] = [];
   page.on('console', (msg) => { if (msg.type() === 'error') consoleErrors.push(msg.text()); });
@@ -28,6 +30,24 @@ test('built site, planner and privacy page work in a real browser', async (t) =>
   assert.equal(external.some((url) => url.includes('formsubmit')), false);
 
   await page.goto(`${origin}/synodos/planner/`, { waitUntil: 'networkidle' });
+
+  // Invalid input must produce a visible message, not a fabricated plan.
+  await page.locator('input[type="date"]').fill('');
+  await page.getByRole('button', { name: /Build my plan/ }).click();
+  assert.ok(await page.getByText('Enter a real start date').isVisible());
+  assert.equal(await page.locator('.plan-day').count(), 0);
+
+  await page.locator('select').nth(1).evaluate((el) => {
+    const select = el as HTMLSelectElement;
+    select.add(new Option('9 people', '9'));
+    select.value = '9';
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  await page.locator('input[type="date"]').fill('2026-11-27');
+  await page.getByRole('button', { name: /Build my plan/ }).click();
+  assert.ok(await page.getByText('Choose between 1 and 4 travellers.').isVisible());
+
+  await page.locator('select').nth(1).selectOption('2');
   await page.getByRole('button', { name: /Build my plan/ }).click();
   await page.locator('.plan-day').first().waitFor();
   assert.equal(await page.locator('.plan-day').count(), 3);
@@ -42,6 +62,18 @@ test('built site, planner and privacy page work in a real browser', async (t) =>
   assert.equal(await page.locator('.plan-day').count(), 3);
   const rebuilt = await page.locator('.plan-slot strong').allTextContents();
   assert.equal(new Set(rebuilt).size, rebuilt.length, 'rebuild repeated a stop');
+
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('button', { name: /Download .md/ }).click(),
+  ]);
+  assert.match(download.suggestedFilename(), /^synodos-[a-z]+-plan\.md$/);
+
+  const heading = await page.locator('.plan-head h2').textContent();
+  const cityNameFromPlan = (heading ?? '').split(',')[0];
+  await page.getByRole('button', { name: /^Copy/ }).click();
+  const copied = await page.evaluate(() => navigator.clipboard.readText());
+  assert.ok(copied.includes(cityNameFromPlan), `clipboard content: ${copied.slice(0, 80)}`);
 
   await page.getByRole('button', { name: /Save plan/ }).click();
   assert.ok(await page.getByRole('button', { name: /Saved/ }).isVisible());
