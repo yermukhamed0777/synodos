@@ -12,6 +12,17 @@ results, timings or metrics are asserted here.
 
 ## [Unreleased]
 
+### Final constraint-engine freeze (2026-11-26)
+
+- Added `npm run validate:matrix`, a deterministic 196-combination matrix over every city,
+  supported duration, weekday and interest set, with a unit test and machine-readable results.
+- Added strict planner input validation, an explicit limited-coverage notice, and a rebuild path that
+  never substitutes a venue closed on that date.
+- Extracted the Electron static server into a testable module and added a real HTTP test for both
+  subpath and root-path exports.
+- Added the planning-engine case study, architecture, example itineraries and desktop support notes.
+- Extended the browser smoke test to cover invalid input, download and copy.
+
 ### Added
 
 - Verification scripts and scripts surface in `package.json`: `typecheck`, `lint`, `test`,

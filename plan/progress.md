@@ -169,3 +169,47 @@ All short-term IDs done. Remaining work is human only: recruit and consent parti
 ### Conclusion
 
 The CI quality gate passed on the pushed commit and the GitHub Pages deployment succeeded. No tag, release, visibility or licence change was made. This entry is documentation only; the pilot remains human and unstarted.
+
+## 2026-11-26 — Final constraint-engine validation and release freeze
+
+Baseline: clean `main` at `87ea728`. No catalog expansion, live inventory, booking integration,
+generative AI or new destination was added. Every result below was run locally; no push, tag,
+release or account action was taken in this session.
+
+### Exact commands and results
+
+| Command | Result |
+|---|---|
+| `npx.cmd tsx scripts/_matrix-probe.ts` (temporary probe, removed) | Before the rebuild fix, across 196 combinations: `hardCases 0`, `advisoryCases 28`, `duplicateCases 0`, `rebuildHard 60` — proved the one-day rebuild could place a venue closed on that date. |
+| `npm.cmd run lint` | exit 0; `eslint . --max-warnings 0`, no diagnostics. |
+| `npm.cmd run typecheck` | exit 0; `tsc --noEmit`, no diagnostics. |
+| `npm.cmd test` | exit 0; **36 tests, 36 pass, 0 fail** after the matrix, input, export and desktop-server tests were added. |
+| `npm.cmd run validate:matrix` | exit 0; `combinations 196`, `daysGenerated 476`, `hardConflicts 0`, `advisoryWarnings 28`, `duplicateStops 0`, `incompleteBuilds 0`, `rebuilds 476` (`rebuildHardConflicts 0`, `rebuildLimited 164`); SHA-256 `f85b4f30002cb31f6ee94a6c05e86a143fa7816efc48d855426291c18eca22dd`; "PASS matrix: no hard conflicts, duplicates or incomplete curated coverage." |
+| `npm.cmd run verify` | exit 0; typecheck + lint clean; **34 tests** at that point, 34 pass; build compiled 2.4 s, TypeScript 2.1 s, 6 static pages in 454 ms; 5 routes; artefact check PASS, 0 problems. |
+| `npm.cmd run test:e2e` | exit 0; **1 test, 1 pass, 0 fail**; browser test 3885.84 ms after extending it with invalid-date, invalid-group-size, download and clipboard assertions. |
+| `npm.cmd run verify:variants` | exit 0; `/synodos` build artefact check PASS 0 problems; root `''` build artefact check PASS 0 problems; "PASS both variants; out/ restored to the /synodos build." |
+| `npm.cmd run walkthrough` (twice) | exit 0; fixtures 111 / 1094 / 2411 / 1661 / 298 bytes; `manifest.json` SHA-256 identical: `0E93C98AC15E8B4770C5055329588BBCBFA467A71094385FBA6D0471E38363AC`. |
+| `gh api repos/yermukhamed0777/synodos/commits/87ea728/statuses` | Vercel `pending` then `success` at `2026-11-26T03:58:42Z`, target `https://vercel.com/erm1ham3d2204-2491/synodos/EQbtwaKaGaqJXCYE8Ud14hXhNHHS`. No `vercel.json` in the repo; anonymous probes of plausible Vercel origins returned the Vercel login shell, so the live Vercel path configuration could not be verified without dashboard access. |
+| `Test-Path desktop\node_modules\electron` | `False`; full Electron packaging was not run. Wrapper path logic is covered by `tests/unit/desktop-server.test.ts` against a real HTTP server. |
+
+### Changes
+
+- `F1-1`: `scripts/validate-matrix.ts` and `tests/unit/matrix.test.ts` enumerate 4 cities × supported
+  durations × 7 weekdays × 4 interest sets, assert no hard conflicts/duplicates/incomplete coverage,
+  and write `artifacts/matrix/results.json` + `summary.md` with a deterministic hash.
+- `F1-2`: `buildItineraryWithStatus` and `rebuildDayWithStatus` return explicit `limited` flags; a
+  closed or slot-incompatible stop is never substituted and only complete days are published. The UI
+  shows a limitation notice instead of a fabricated plan. Rebuild hard conflicts fell from 60 to 0.
+- `F1-3`: `lib/planner-input.ts` enforces real ISO dates, supported cities, 2–`maxDaysFor(city)` days
+  and 1–4 travellers; the browser e2e proves invalid input generates no plan.
+- `F1-4`: `desktop/server.js` extracted for testing; `desktop/main.js` uses it; `docs/DESKTOP.md`
+  records verified paths and unsigned/unbuilt formats.
+- `F1-5`: canonical demo URL, `docs/CASE_STUDY.md`, `docs/ARCHITECTURE.md`,
+  `docs/EXAMPLE_ITINERARIES.md`, `docs/DESKTOP.md`, README/CHANGELOG updates.
+
+### Open items
+
+`F1-6` is human only: push/deploy, CI watch, Vercel domain/redirect confirmation, signed desktop
+releases and the seven-day student pilot. Prices, transfer times and opening hours are documented as
+USD-equivalent estimates, deterministic straight-line estimates and curated facts checked
+2026-11-24 — never real-time availability. No usage, user or revenue result was measured.

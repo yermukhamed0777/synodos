@@ -168,3 +168,32 @@ Gate: `P1-1` and `P1-2` were **re-authorised 2026-11-26** and are now `DONE (202
 
 - [ ] **`M3-3` — Business model and scale exit.** `OPEN`
   - Exit (targets): ≥1,000 paying subscribers; ≥40% 30-day retention; ≥99% sourced stops; p95 plan generation < 2 s; cost per plan < $0.05; zero critical advisories; signed releases on all three platforms.
+
+---
+
+## Final constraint-engine validation — 2026-11-26
+
+- [x] **`F1-1` — Systematic validation matrix for every city and duration.** `DONE (2026-11-26)`
+  - Surface: `scripts/validate-matrix.ts`, `tests/unit/matrix.test.ts`.
+  - Evidence: 196 combinations (4 cities × supported durations × 7 weekdays × 4 interest sets), 476 generated days, 0 hard conflicts, 28 advisories, 0 duplicates, 0 incomplete builds; SHA-256 `f85b4f30002cb31f6ee94a6c05e86a143fa7816efc48d855426291c18eca22dd`.
+  - **Done when:** `npm.cmd run validate:matrix` exits 0 and the same invariants run in `npm test`. Verified.
+
+- [x] **`F1-2` — One-day rebuild could place a venue closed on that date.** `DONE (2026-11-26)`
+  - Surface: `lib/itineraries.ts` (`rebuildDayWithStatus`, `buildItineraryWithStatus`), `components/planner/Planner.tsx`, `app/globals.css`.
+  - Before: 60 of 476 rebuilds produced a hard closure conflict. After: 0 of 476. A rebuild with no open alternative is reported as `limited` and the UI says no attraction was invented.
+  - **Done when:** `npm.cmd run validate:matrix` reports `rebuildHardConflicts: 0` and a matrix test asserts limited rebuilds stay conflict-free. Verified.
+
+- [x] **`F1-3` — Invalid dates and group sizes had no pure validation path.** `DONE (2026-11-26)`
+  - Surface: `lib/planner-input.ts`, `components/planner/Planner.tsx`, `tests/unit/planner-input.test.ts`.
+  - **Done when:** strict ISO dates and 1–4 travellers are rejected with visible messages; e2e proves no plan is generated. Verified.
+
+- [x] **`F1-4` — Electron static server was not testable without Electron.** `DONE (2026-11-26)`
+  - Surface: `desktop/server.js`, `desktop/main.js`, `desktop/package.json`, `tests/unit/desktop-server.test.ts`.
+  - **Done when:** a real HTTP test serves both `/synodos/` and root-path exports and rejects out-of-prefix paths. Verified. Full Electron packaging remains unsigned/unsupported on some platforms and is documented in `docs/DESKTOP.md`.
+
+- [x] **`F1-5` — CV-ready case study, architecture, examples and canonical demo.** `DONE (2026-11-26)`
+  - Surface: `docs/CASE_STUDY.md`, `docs/ARCHITECTURE.md`, `docs/EXAMPLE_ITINERARIES.md`, `docs/DESKTOP.md`, `README.md`.
+  - **Done when:** numbers trace to recorded commands; no live-inventory, booking or generative-AI claim; canonical demo URL and deterministic fixtures documented. Verified.
+
+- [ ] **`F1-6` — Owner-only publication of the freeze.** `HUMAN ONLY`
+  - Push, CI watch, GitHub Pages/Vercel deployment confirmation, signed desktop releases and the student pilot. Agent work stops at the boundary in `docs/PILOT_HANDOFF.md`.
