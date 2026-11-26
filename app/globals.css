@@ -290,6 +290,10 @@ h1, h2, h3, p { margin-top: 0; }
 .form-ok { display: flex; align-items: center; gap: 12px; padding: 18px 0 4px; font-size: 14px; color: #b8f0cd; }
 .form-ok i { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: rgba(63,181,121,0.16); font-style: normal; }
 .form-note { margin-top: 16px; font-size: 11px; color: var(--text-muted); }
+.form-note a { color: var(--white); text-decoration: underline; text-underline-offset: 3px; }
+.consent-row { display: flex; gap: 10px; align-items: flex-start; margin-top: 12px; font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+.consent-row input { margin-top: 2px; accent-color: var(--red); }
+.consent-row a { color: var(--white); text-decoration: underline; text-underline-offset: 3px; }
 
 /* ---------- Modal ---------- */
 .modal-backdrop {

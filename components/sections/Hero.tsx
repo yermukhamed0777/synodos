@@ -10,14 +10,14 @@ export function Hero() {
         <img className="hero-bg" src={asset('hero-aurora.webp')} alt="" aria-hidden="true" />
         <div className="wrap hero-inner">
           <div className="hero-copy">
-            <span className="eyebrow">AI travel companion</span>
+            <span className="eyebrow">Deterministic travel planner</span>
             <h1 className="display display--hero">
               See the world.<br />
-              Synodos handles <span className="accent-purple">the rest.</span>
+              Synodos handles <span className="accent-purple">the draft.</span>
             </h1>
             <p className="lead">
-              Your AI companion that plans, guides and supports you at every step of the journey.
-              Before you go, while you’re there, and when you return.
+              Pick a city and Synodos assembles a day-by-day draft you can check, save and change
+              one day at a time. Built on curated data, not model memory.
             </p>
             <div className="hero-actions">
               <a href={`${BASE_PATH}/planner/`} className="btn btn--primary">Start Your Journey <span aria-hidden="true">→</span></a>

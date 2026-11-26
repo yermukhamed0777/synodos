@@ -10,7 +10,7 @@ export function Features() {
             <h2 className="display">From the first idea to the moment you return home.</h2>
           </div>
           <p className="muted" style={{ maxWidth: 320, fontSize: 13, lineHeight: 1.6, margin: 0 }}>
-            A grounded companion: real places, real timings, checked before they reach you.
+            A grounded planner: curated stops, checked hours and transfer estimates, computed locally.
           </p>
         </div>
 

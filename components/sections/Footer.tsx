@@ -12,7 +12,7 @@ export function Footer() {
             {NAV_ITEMS.map((item) => <a key={item.href} href={`${BASE_PATH}/${item.href}`}>{item.label}</a>)}
             <a href={`${BASE_PATH}/planner/`}>Planner</a>
             <a href={`${BASE_PATH}/#waitlist`}>Waitlist</a>
-            <a href="mailto:hello@synodos.app">Contact</a>
+            <a href={`${BASE_PATH}/privacy/`}>Privacy</a>
           </nav>
         </div>
         <div className="footer-bottom">

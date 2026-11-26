@@ -39,11 +39,13 @@ export const metadata: Metadata = {
     title: `${SITE.name} — ${SITE.tagline}`,
     description: SITE.description,
     siteName: SITE.name,
+    images: [`${SITE.url}assets/images/hero-aurora.webp`],
   },
   twitter: {
     card: 'summary_large_image',
     title: `${SITE.name} — ${SITE.tagline}`,
     description: SITE.description,
+    images: [`${SITE.url}assets/images/hero-aurora.webp`],
   },
   robots: { index: true, follow: true },
 };

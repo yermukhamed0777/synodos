@@ -5,7 +5,7 @@ export function Business() {
     <section className="section-block vision" id="vision">
       <div className="wrap vision-grid">
         <div>
-          <span className="eyebrow eyebrow--purple">Vision</span>
+          <span className="eyebrow eyebrow--purple">Vision — future direction</span>
           <h2 className="display" style={{ margin: '16px 0 26px' }}>
             Travel smarter.<br />Experience <span className="accent-red">deeper.</span>
           </h2>

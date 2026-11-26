@@ -11,8 +11,8 @@ export function HowItWorks() {
           <span className="eyebrow eyebrow--purple">Experience</span>
           <h2 className="display">Every journey deserves clarity. <span className="accent-red">We bring it.</span></h2>
           <p className="lead">
-            Synodos is your AI travel companion that plans, guides and supports you at every step
-            of your journey — one calm place for the things that actually matter.
+            Synodos turns a city and a few preferences into a day-by-day draft, checks its timing
+            against curated hours and gives you a clean handoff to real search pages.
           </p>
           <div className="hero-actions" style={{ marginTop: 28 }}>
             <a href="#technology" className="btn btn--primary">See how it works <span aria-hidden="true">→</span></a>

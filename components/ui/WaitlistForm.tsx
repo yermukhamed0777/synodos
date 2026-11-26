@@ -1,18 +1,36 @@
 'use client';
 
 import { useState } from 'react';
+import { emit } from '@/lib/events';
+import { BASE_PATH } from '@/lib/site';
 
 type Status = 'idle' | 'loading' | 'error' | 'done';
 
-const ENDPOINT = 'https://formsubmit.co/ajax/erm1ham3d2604@gmail.com';
+/** Set at build time. With no endpoint configured the form stays disabled. */
+const ENDPOINT = process.env.NEXT_PUBLIC_WAITLIST_ENDPOINT ?? '';
 
 export function WaitlistForm() {
   const [email, setEmail] = useState('');
+  const [consent, setConsent] = useState(false);
   const [status, setStatus] = useState<Status>('idle');
   const [message, setMessage] = useState('');
 
+  if (!ENDPOINT) {
+    return (
+      <div className="form-note" role="status">
+        The waitlist is not open yet — no submission endpoint is configured in this build. See the{' '}
+        <a href={`${BASE_PATH}/privacy/`}>privacy notice</a>.
+      </div>
+    );
+  }
+
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!consent) {
+      setStatus('error');
+      setMessage('Please agree to the privacy notice before submitting.');
+      return;
+    }
     const value = email.trim();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
       setStatus('error');
@@ -28,18 +46,18 @@ export function WaitlistForm() {
         body: JSON.stringify({
           email: value,
           name: 'Synodos waitlist',
-          message: `New Synodos early-access request from ${value}`,
+          message: 'New Synodos early-access request',
           _subject: 'Synodos — new early-access request',
           _template: 'table',
-          _captcha: 'false',
         }),
       });
       if (!res.ok) throw new Error(`Request failed (${res.status})`);
       setStatus('done');
       setMessage('You’re on the list. We’ll email you when your spot is ready.');
+      emit('waitlist_submitted');
     } catch {
       setStatus('error');
-      setMessage('Could not submit right now. Please email hello@synodos.app directly.');
+      setMessage('Could not submit right now. Please try again later.');
     }
   };
 
@@ -73,12 +91,25 @@ export function WaitlistForm() {
         />
         <span className="field-error" id="waitlist-error" role="alert">{status === 'error' ? message : ''}</span>
       </div>
-      <button type="submit" className="btn btn--primary" disabled={status === 'loading'} style={{ width: '100%', marginTop: 8 }}>
+      <label className="consent-row">
+        <input
+          type="checkbox"
+          checked={consent}
+          onChange={(e) => { setConsent(e.target.checked); if (status === 'error') { setStatus('idle'); setMessage(''); } }}
+        />
+        <span>I agree to the <a href={`${BASE_PATH}/privacy/`}>privacy notice</a> and to being contacted about early access.</span>
+      </label>
+      <button
+        type="submit"
+        className="btn btn--primary"
+        disabled={status === 'loading' || !consent}
+        style={{ width: '100%', marginTop: 8 }}
+      >
         {status === 'loading' ? 'Sending…' : 'Request access'} <span aria-hidden="true">→</span>
       </button>
       <p className="form-note">
-        Your address is sent to our inbox via FormSubmit. First signup requires one confirmation
-        click from the owner’s email. No tracking, no resale.
+        Your address is sent only to the configured submission endpoint. No tracking, no resale.
+        You can ask for deletion at any time — see the privacy notice.
       </p>
     </form>
   );
