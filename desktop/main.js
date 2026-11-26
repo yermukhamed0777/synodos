@@ -3,6 +3,10 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
+// Matches the basePath used when `out/` was built. Defaults to the Pages path.
+const BASE_PATH = process.env.SYNODOS_BASE_PATH ?? '/synodos';
+const PREFIX = BASE_PATH ? `${BASE_PATH}/` : '/';
+
 const MIME = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
@@ -21,17 +25,17 @@ function serve(root) {
   return new Promise((resolve) => {
     const server = http.createServer((req, res) => {
       const urlPath = decodeURIComponent((req.url || '/').split('?')[0]);
-      if (urlPath === '/' || urlPath === '') {
-        res.writeHead(302, { Location: '/synodos/' });
+      if (PREFIX !== '/' && (urlPath === '/' || urlPath === '')) {
+        res.writeHead(302, { Location: PREFIX });
         res.end();
         return;
       }
-      if (!urlPath.startsWith('/synodos/')) {
+      if (PREFIX !== '/' && !urlPath.startsWith(PREFIX)) {
         res.writeHead(404, { 'Content-Type': 'text/plain' });
         res.end('Not found');
         return;
       }
-      let rel = urlPath.slice('/synodos/'.length);
+      let rel = PREFIX === '/' ? urlPath.slice(1) : urlPath.slice(PREFIX.length);
       let file = path.join(root, rel);
       if (!file.startsWith(root)) {
         res.writeHead(403);
@@ -71,12 +75,12 @@ app.whenReady().then(async () => {
     title: 'Synodos',
     webPreferences: { contextIsolation: true, nodeIntegration: false },
   });
-  win.loadURL(`http://127.0.0.1:${port}/synodos/`);
+  win.loadURL(`http://127.0.0.1:${port}${PREFIX}`);
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       const w = new BrowserWindow({ width: 1280, height: 860, backgroundColor: '#08070b' });
-      w.loadURL(`http://127.0.0.1:${port}/synodos/`);
+      w.loadURL(`http://127.0.0.1:${port}${PREFIX}`);
     }
   });
 });

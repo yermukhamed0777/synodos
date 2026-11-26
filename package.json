@@ -2,22 +2,37 @@
   "name": "synodos",
   "version": "1.0.0",
   "private": true,
-  "description": "Synodos — the AI companion for the whole journey.",
+  "description": "Synodos — a deterministic, verifiable travel planner and concept site.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next build && next start",
-    "lint": "next lint"
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --max-warnings 0",
+    "test": "tsx --test tests/unit/*.test.ts",
+    "test:e2e": "tsx --test tests/e2e/*.test.ts",
+    "verify": "npm run typecheck && npm run lint && npm test && npm run build && npm run verify:artifact",
+    "verify:artifact": "node scripts/verify-artifact.mjs",
+    "verify:variants": "node scripts/verify-variants.mjs",
+    "walkthrough": "tsx scripts/capture-walkthrough.ts"
   },
   "dependencies": {
-    "next": "16.2.9",
+    "next": "16.4.6",
     "react": "19.0.0",
     "react-dom": "19.0.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "typescript": "^5"
+    "eslint": "^9",
+    "playwright-core": "^1.65.0",
+    "tsx": "^4",
+    "typescript": "^5",
+    "typescript-eslint": "^8"
+  },
+  "engines": {
+    "node": ">=20.19.0"
   }
 }
