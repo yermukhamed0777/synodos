@@ -14,6 +14,7 @@
     "verify": "npm run typecheck && npm run lint && npm test && npm run build && npm run verify:artifact",
     "verify:artifact": "node scripts/verify-artifact.mjs",
     "verify:variants": "node scripts/verify-variants.mjs",
+    "validate:matrix": "tsx scripts/validate-matrix.ts",
     "walkthrough": "tsx scripts/capture-walkthrough.ts"
   },
   "dependencies": {

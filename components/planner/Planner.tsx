@@ -4,10 +4,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { BASE_PATH } from '@/lib/site';
 import { formatMinutes, validatePlan } from '@/lib/feasibility';
 import { emit } from '@/lib/events';
+import { validatePlannerInput } from '@/lib/planner-input';
 import { parseSavedPlan, SAVED_PLAN_KEY, serializeSavedPlan } from '@/lib/saved-plan';
 import {
   budgetBreakdown,
-  buildItinerary,
+  buildItineraryWithStatus,
   CITIES,
   estimateBudget,
   handoffLinks,
@@ -15,7 +16,7 @@ import {
   itineraryToMarkdown,
   mapLink,
   maxDaysFor,
-  rebuildDay,
+  rebuildDayWithStatus,
   type City,
   type Interest,
   type PlannedDay,
@@ -39,6 +40,8 @@ export function Planner() {
   const [result, setResult] = useState<Result>(null);
   const [saved, setSaved] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [notice, setNotice] = useState('');
+  const [inputError, setInputError] = useState('');
 
   const city = useMemo(() => CITIES.find((c) => c.id === cityId) ?? CITIES[0], [cityId]);
 
@@ -70,8 +73,20 @@ export function Planner() {
   };
 
   const generate = () => {
-    const days = buildItinerary(city, nights, interests, startDate);
-    setResult({ city, days, travellers });
+    const check = validatePlannerInput({ cityId, startDate, days: nights, travellers });
+    if (!check.ok) {
+      setInputError(check.message);
+      setNotice(check.message);
+      return;
+    }
+    setInputError('');
+    const { days, limited } = buildItineraryWithStatus(city, nights, interests, startDate);
+    setResult({ city, days: days.length ? days : [], travellers });
+    setNotice(
+      limited
+        ? 'The curated dataset could not fill every requested day with open stops. Only complete days are shown — no attractions were invented.'
+        : ''
+    );
     setSaved(false);
     setCopied(false);
     emit('plan_generated');
@@ -82,8 +97,21 @@ export function Planner() {
 
   const rebuild = (index: number) => {
     if (!result) return;
-    const days = rebuildDay(result.city, result.days, index, interests, startDate);
+    const { days, changed, limited } = rebuildDayWithStatus(
+      result.city,
+      result.days,
+      index,
+      interests,
+      startDate
+    );
     setResult({ ...result, days });
+    setNotice(
+      limited
+        ? 'No open alternative exists in the curated set for this date, so that slot was left unchanged. No extra attraction was invented.'
+        : changed
+          ? ''
+          : 'This is already the best curated fit for this day and date.'
+    );
     setSaved(false);
     emit('plan_rebuilt');
   };
@@ -202,7 +230,12 @@ export function Planner() {
           <div className="planner-row planner-row--3">
             <label className="planner-field">
               <span>Start date</span>
-              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+              <input
+                type="date"
+                value={startDate}
+                aria-invalid={Boolean(inputError)}
+                onChange={(e) => { setStartDate(e.target.value); setInputError(''); }}
+              />
             </label>
             <label className="planner-field">
               <span>Days</span>
@@ -212,7 +245,7 @@ export function Planner() {
             </label>
             <label className="planner-field">
               <span>Travellers</span>
-              <select value={travellers} onChange={(e) => setTravellers(Number(e.target.value))}>
+              <select value={travellers} onChange={(e) => { setTravellers(Number(e.target.value)); setInputError(''); }}>
                 {[1, 2, 3, 4].map((n) => <option key={n} value={n}>{n} {n === 1 ? 'person' : 'people'}</option>)}
               </select>
             </label>
@@ -239,6 +272,7 @@ export function Planner() {
         <button type="button" className="btn btn--primary" style={{ width: '100%', marginTop: 8 }} onClick={generate}>
           Build my plan <span aria-hidden="true">→</span>
         </button>
+        {inputError && <p className="planner-limit" role="alert">{inputError}</p>}
         <p className="form-note">
           Prototype planner: plans are assembled from a curated city dataset. All money shown is a
           USD-equivalent estimate — no live prices, FX conversion or booking is involved. Trips are
@@ -291,6 +325,10 @@ export function Planner() {
                 </div>
               ))}
             </div>
+
+            {notice && (
+              <p className="planner-limit" role="status" aria-live="polite">{notice}</p>
+            )}
 
             {check && (
               <div className={`feasibility ${check.totalHard > 0 ? 'has-warn' : 'is-ok'}`} role="status">

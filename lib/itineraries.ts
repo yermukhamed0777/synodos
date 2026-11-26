@@ -168,12 +168,18 @@ export function maxDaysFor(city: City): number {
   );
 }
 
-export function buildItinerary(
+export type BuildResult = {
+  days: PlannedDay[];
+  /** Requested days that could not be filled from curated, open stops. */
+  limited: boolean;
+};
+
+export function buildItineraryWithStatus(
   city: City,
   nights: number,
   interests: Interest[],
   startDate?: string
-): PlannedDay[] {
+): BuildResult {
   const score = (item: Item) => item.tags.filter((t) => interests.includes(t)).length;
   const used = new Set<string>();
   const total = Math.max(0, Math.min(nights, maxDaysFor(city)));
@@ -182,6 +188,7 @@ export function buildItinerary(
     { length: total },
     () => ({}) as Record<Slot, Item>
   );
+  let limited = false;
 
   SLOTS.forEach((slot) => {
     const items = city.items.filter((i) => i.slot === slot);
@@ -200,44 +207,77 @@ export function buildItinerary(
       const date = dates[d];
       const available = items.filter((i) => !used.has(i.title));
       const open = available.filter((i) => !closedOn(i, date) && fitsSlot(i, slot));
-      const pool = open.length ? open : available;
-      const chosen = [...pool].sort(
+      if (!open.length) {
+        limited = true;
+        return;
+      }
+      const chosen = [...open].sort(
         (a, b) => openDayCount(a) - openDayCount(b) || score(b) - score(a) || a.price - b.price
       )[0];
-      if (!chosen) throw new Error(`Not enough curated stops for ${slot} in ${city.name}`);
       used.add(chosen.title);
       picksByDay[d][slot] = chosen;
     });
   });
 
-  return picksByDay.map((picks, i) => ({ day: i + 1, ...picks }));
+  // Only complete days are published. A partially filled day would force a
+  // closed stop into the plan, which is exactly the fabrication we avoid.
+  const complete = picksByDay.filter((picks) => SLOTS.every((slot) => picks[slot]));
+  return {
+    days: complete.map((picks, i) => ({ day: i + 1, ...picks })),
+    limited: limited || complete.length < total,
+  };
 }
+
+/** Backward-compatible wrapper returning only the built days. */
+export function buildItinerary(
+  city: City,
+  nights: number,
+  interests: Interest[],
+  startDate?: string
+): PlannedDay[] {
+  return buildItineraryWithStatus(city, nights, interests, startDate).days;
+}
+
+export type RebuildResult = {
+  days: PlannedDay[];
+  changed: boolean;
+  /** A slot had no open, unused alternative on that date, so it was left alone. */
+  limited: boolean;
+};
 
 /**
  * Rebuild a single day while keeping every other day untouched.
- * This is the "one change should not invalidate the whole trip" behaviour.
+ * A stop that is closed on that date is never substituted: the curated set is
+ * finite, and inventing a replacement would be a false claim. `limited` tells
+ * the UI to say so instead of silently showing an impossible plan.
  */
-export function rebuildDay(
+export function rebuildDayWithStatus(
   city: City,
   currentDays: PlannedDay[],
   index: number,
   interests: Interest[],
   startDate?: string
-): PlannedDay[] {
-  if (index < 0 || index >= currentDays.length) return currentDays;
+): RebuildResult {
+  if (index < 0 || index >= currentDays.length)
+    return { days: currentDays, changed: false, limited: false };
   const score = (item: Item) => item.tags.filter((t) => interests.includes(t)).length;
   // Deep-ish copy so the caller's state is never mutated.
   const days = currentDays.map((d) => ({ ...d }));
   const date = dayDate(startDate, index);
+  let changed = false;
+  let limited = false;
 
   SLOTS.forEach((slot) => {
     const current = days[index][slot];
-    const alternatives = city.items.filter((i) => i.slot === slot && i.title !== current.title);
-    const open = alternatives.filter((i) => !closedOn(i, date) && fitsSlot(i, slot));
-    const candidates = (open.length ? open : alternatives)
-      .sort((a, b) => score(b) - score(a) || a.price - b.price);
+    const open = city.items
+      .filter((i) => i.slot === slot && i.title !== current.title)
+      .filter((i) => !closedOn(i, date) && fitsSlot(i, slot));
+    if (!open.length) {
+      limited = true;
+      return;
+    }
+    const candidates = open.sort((a, b) => score(b) - score(a) || a.price - b.price);
     const pick = candidates[0];
-    if (!pick) return;
 
     // If the preferred stop already sits on another day, swap it with this
     // day's current stop. No stop is duplicated and no day is lost — the rest
@@ -260,10 +300,26 @@ export function rebuildDay(
         }
       }
     }
-    if (placed) days[index][slot] = pick;
+    if (placed) {
+      days[index][slot] = pick;
+      changed = true;
+    } else {
+      limited = true;
+    }
   });
 
-  return days;
+  return { days, changed, limited };
+}
+
+/** Backward-compatible wrapper returning only the rebuilt days. */
+export function rebuildDay(
+  city: City,
+  currentDays: PlannedDay[],
+  index: number,
+  interests: Interest[],
+  startDate?: string
+): PlannedDay[] {
+  return rebuildDayWithStatus(city, currentDays, index, interests, startDate).days;
 }
 
 export function estimateBudget(city: City, days: number, travellers: number) {

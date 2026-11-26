@@ -26,7 +26,7 @@ export default tseslint.config(
   },
   // Build scripts and tests run in Node, not a browser.
   {
-    files: ['scripts/**/*.mjs', 'tests/**/*.ts'],
+    files: ['scripts/**/*.{mjs,ts}', 'tests/**/*.ts'],
     languageOptions: {
       globals: { process: 'readonly', console: 'readonly', URL: 'readonly', Buffer: 'readonly' },
     },
