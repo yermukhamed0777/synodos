@@ -83,3 +83,66 @@ Rules: append one entry per work session, including research/scoping-only sessio
 ### Open items
 
 Unchanged from the previous entry. The CI annotation is an environment/workflow observation, not a direction change, so no `decisions.md` row was added; record it under `P1-1` if the publish phase is re-opened.
+
+## 2026-11-26 — New mandate: plan-layer re-base (planning only)
+
+### What changed
+
+- `plan/decisions.md`: appended six 2026-11-26 decision rows (mandate supersedes the 2026-11-25 publish-skip decision; human boundary at the real-user pilot; USD-only money labels; 3-day selector cap; env-gated waitlist with consent and a static privacy page; content-free event harness).
+- `plan/backlog.md`: `P1-1`/`P1-2` changed from BLOCKED to `OPEN — re-authorised 2026-11-26`; horizon map and gate updated; added `P0-11`, `V1-1`, `V1-2`, `V1-3`, `CV-1`, `CV-2`, `CV-3`, `CV-4`, all OPEN.
+- `plan/roadmap.md`: updated the P1-1/P1-2 sentence and the "publishing scaffolding stays skipped" note; added section 7 (CV-ready finish and verification) with Intelligence/Human split and Done-when.
+- `plan/strategy.md`: resolved the Phase 2 open question as re-authorised, updated the commercial-posture note, and added a 2026-11-26 session-history row.
+- `plan/README.md`: status snapshot now marks the 2026-11-26 mandate in progress, re-authorised `P1-1`/`P1-2`, and lists the new IDs as next actions; 2026-11-25 numbers retained verbatim and labelled baseline.
+- No source code changed; no commands beyond file reads/writes were run in this session.
+
+## 2026-11-26 — Hardening, verification matrix and CV-ready finish (implementation session)
+
+### What changed (grouped by backlog ID)
+
+- `P0-1`, `P0-7`: replaced `next lint` with ESLint flat config (`eslint.config.mjs`) and added `typecheck`; pinned `next@16.4.6`, added dev tooling; `npm ci` and `npm audit` now report 0 vulnerabilities.
+- `P0-2`: added `tsx`/`node:test` harness and `tests/unit/` (25 tests) covering itineraries, feasibility, saved-plan parsing, content-free events and the artefact checker.
+- `P0-3`: `lib/feasibility.ts` now derives a date per day (UTC-noon anchor), separates hard conflicts from advisories, exposes `totalHard`, and generates an accurate closing/last-entry message. `lib/itineraries.ts` schedules stops against closure days and slot fit, so default plans have zero hard conflicts.
+- `P0-4`: removed `fallback[d % fallback.length]`; `maxDaysFor` clamps trips to the dataset-supported 2–3 days; `rebuildDay` never loses a day and avoids duplicate stops.
+- `P0-5`: removed `City.currency`; every displayed money value is now `~$N USD` with an explicit USD-equivalent form note.
+- `P0-6`: added `lib/saved-plan.ts` with version `synodos_saved_plan_v1`, validation and an automatic restore path; corrupt payloads are rejected.
+- `P0-8`, `P0-11`: waitlist endpoint now comes from `NEXT_PUBLIC_WAITLIST_ENDPOINT` (form disabled when unset), CAPTCHA override removed, consent checkbox added, personal address removed from tracked source and desktop metadata, and `app/privacy/page.tsx` added and linked.
+- `P0-9`: reconciled public copy with shipped behaviour across `lib/site.ts`, Hero/Idea/HowItWorks/Features/Business/Footer/ConceptModal; concept previews labelled; unused `JOURNEY_ALERTS` removed; OG/Twitter image metadata added.
+- `P0-10`, `V1-2`: `scripts/verify-artifact.mjs` (pure `checkArtifact` + CLI) and `scripts/verify-variants.mjs`; `next.config.ts`, `lib/site.ts` and `desktop/main.js` derive the base path from `NEXT_PUBLIC_BASE_PATH`.
+- `P1-1`: CI gates in both workflows (typecheck → lint → test → build → artefact → browser smoke), Node 24, least-privilege job permissions, CI badge in `README.md`.
+- `P1-2`, `CV-1`: added `LICENSE` (proprietary notice), `CONTRIBUTING.md`, `CHANGELOG.md`, `THIRD_PARTY_NOTICES.md` and rewrote `README.md`. No push, tag, release or visibility change.
+- `V1-3`: `tests/e2e/smoke.test.ts` + `tests/e2e/helpers.ts` use `playwright-core` against the locally installed Chrome/Edge with a local static server; no browser download or external service.
+- `CV-2`: `scripts/capture-walkthrough.ts`, `docs/WALKTHROUGH.md`; deterministic fixtures in gitignored `artifacts/walkthrough/`.
+- `CV-3`: `lib/events.ts` — allowlisted names + timestamp only, no payload, no storage, no network.
+- `CV-4`: `docs/PILOT_HANDOFF.md` — seven-day pilot script, consent wording, go/no-go gates and an explicit human-only list.
+- All 20 short-term IDs are now `DONE (2026-11-26)`.
+
+### Verification matrix — exact commands and exact results
+
+| Command | Result |
+|---|---|
+| `npm.cmd ci` | exit 0; "added 138 packages, and audited 139 packages in 14s"; "found 0 vulnerabilities"; npm 11 `allow-scripts` warning for `esbuild@0.28.2`; eslint@9 deprecation warning. |
+| `npm.cmd audit --audit-level=low` | exit 0; "found 0 vulnerabilities". |
+| `npm.cmd run typecheck` | exit 0; `tsc --noEmit`, no diagnostics. |
+| `npm.cmd run lint` | exit 0; `eslint . --max-warnings 0`, no diagnostics. |
+| `npm.cmd test` | exit 0; `tests 25`, `pass 25`, `fail 0`, `skipped 0`, `duration_ms` 172.49 (final `verify` run) / 230.07 (standalone run). |
+| `npm.cmd run build` | exit 0; Next 16.4.6 Turbopack; compiled 766 ms, TypeScript 1263 ms, 6 static pages in 513 ms; 5 routes `/`, `/_not-found`, `/icon.svg`, `/planner`, `/privacy`. |
+| `npm.cmd run verify:artifact` | exit 0; "PASS artifact check: 5 required files, base path '/synodos', 0 problems". |
+| `npm.cmd run test:e2e` | exit 0; `tests 1`, `pass 1`, `fail 0`; browser test 2890.24 ms, suite 3320.99 ms; 0 console errors; 0 external font or FormSubmit requests. |
+| `npm.cmd run verify:variants` | exit 0; subpath build → "PASS artifact check: 5 required files, base path '/synodos', 0 problems"; root build → "PASS artifact check: 5 required files, base path '', 0 problems"; "PASS both variants; out/ restored to the /synodos build." |
+| `npm.cmd run walkthrough` (twice) | exit 0; fixtures 111 / 1094 / 2411 / 1661 / 298 bytes; `manifest.json` SHA-256 identical across runs: `0E93C98AC15E8B4770C5055329588BBCBFA467A71094385FBA6D0471E38363AC`. |
+| `npm.cmd run verify` | exit 0; whole chain typecheck → lint → 25/25 tests → build → artefact check passed; recorded build timings 766/1263/513 ms and 5 routes. |
+| CI gate probe (temporary `tests/unit/zz-gate-probe.test.ts`, removed after) | `npm.cmd test` → `tests 26`, `pass 25`, `fail 1`, `GATE_EXIT=1`; after removal `npm.cmd test` → `tests 25`, `pass 25`, `fail 0`. Proves a red test blocks the gated job. |
+| `git diff --check` | exit 0; no whitespace errors (only LF→CRLF normalisation warnings). |
+
+### Open items
+
+All short-term IDs done. Remaining work is human only: recruit and consent participants, configure a real waitlist endpoint and review the privacy notice, run interviews and record go/no-go, sign partners/certificates, and explicitly authorise any push/tag/release. Mid/long-term IDs (`M1-1` … `M3-3`) remain OPEN targets, not measurements. Measured numbers above are local only; no CI run ID or deploy conclusion exists for this session because nothing was pushed.
+
+### Final re-run after the last artefact-checker change (2026-11-26)
+
+| Command | Result |
+|---|---|
+| `npm.cmd run verify` | exit 0; typecheck/lint clean; `tests 25`, `pass 25`, `fail 0` (211.44 ms); build compiled 184 ms, TypeScript 1500 ms, 6 static pages in 492 ms, 5 routes; artefact check PASS, 0 problems. |
+| `npm.cmd run test:e2e` | exit 0; `tests 1`, `pass 1`, `fail 0`; browser test 2972.04 ms, suite 3432.63 ms. |
+| `npm.cmd run verify:variants` | exit 0; subpath base path `/synodos` PASS 0 problems; root base path `''` PASS 0 problems; `out/` restored to the `/synodos` build. |
+| `git diff --check` | exit 0; no whitespace errors (only LF→CRLF normalisation warnings). |

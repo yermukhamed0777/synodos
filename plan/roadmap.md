@@ -6,7 +6,7 @@ Three horizons. Every milestone is split into **Intelligence** (what the assista
 
 ## 1. Short term — next concrete steps
 
-These are the steps the assistant takes next, in order. Priority chosen by the user on 2026-11-25: **hardening first**. Two further items, `P1-1` (CI quality gate) and `P1-2` (public-repo scaffolding), are explicitly **BLOCKED** because the publish phase was skipped; they are listed in `backlog.md` and must not be started without a new user decision.
+These are the steps the assistant takes next, in order. Priority chosen by the user on 2026-11-25: **hardening first**. On 2026-11-26 the user re-authorised the publish phase: `P1-1` (CI quality gate) and `P1-2` (public-repo scaffolding) are now **OPEN — re-authorised 2026-11-26**, as listed in `backlog.md`. This is local work only — no push, publication or spend without final explicit confirmation.
 
 **1. Repair the local verification path.** (`P0-1`, `P0-2`)
 - **Intelligence:** replace `next lint` in `package.json:10` (removed in Next 16) with a working lint/typecheck path; add `typecheck` and `test` scripts; write the first unit tests around pure functions in `lib/itineraries.ts:130-150,156-190` and `lib/feasibility.ts:62-119`.
@@ -28,7 +28,7 @@ These are the steps the assistant takes next, in order. Priority chosen by the u
 - **Human:** decide whether local-only persistence is sufficient or accounts are required (accounts imply privacy work).
 - **Done when:** a generated plan survives reload without error, or the UI/README no longer claim saving works.
 
-**5. Close the dependency and privacy exposure.** (`P0-7`, `P0-8`) — code changes only; publishing scaffolding stays skipped.
+**5. Close the dependency and privacy exposure.** (`P0-7`, `P0-8`) — code changes first; publishing scaffolding re-authorised 2026-11-26 (`P1-2`).
 - **Intelligence:** evaluate and apply the Next.js upgrade suggested by `npm audit` (`next@16.4.6`, currently pinned at `16.2.9` in `package.json:13`); make the FormSubmit endpoint configurable, re-enable CAPTCHA (`WaitlistForm.tsx:7,34`), add consent + privacy-link UI.
 - **Human:** choose the email processor and sign the DPA; accept or reject the residual risk in writing; provide the privacy-policy text.
 - **Done when:** `npm audit` exits 0 or a signed risk note is appended to `decisions.md`; no personal address is hard-coded in tracked source; the form cannot submit without consent; build still exits 0.
@@ -66,6 +66,27 @@ These are the steps the assistant takes next, in order. Priority chosen by the u
 - **Intelligence:** build the server-side planner API and eval loop; add PWA/offline support (`lib/site.ts:10` currently claims "lives on your phone" with no manifest); implement feature flags, observability and product analytics with consent; maintain the on-prem/desktop package; keep CI supply-chain checks current.
 - **Human:** set pricing and terms, sign partners and DPAs, choose jurisdictions and data residency, record launch demos, decide open-source vs closed-source publication of any component, and fund the operation.
 - **Quantitative exit criteria (targets, not measured):** ≥1,000 paying subscribers; ≥40% 30-day retention; ≥3 live partner cities; ≥99% of displayed stops with a source and checked-at date; p95 plan generation < 2 s; cost per plan < $0.05; zero critical `npm audit` findings; signed releases on all three desktop platforms.
+
+---
+
+## 7. CV-ready finish and verification (2026-11-26 mandate)
+
+Supersedes the 2026-11-25 publish-skip decision. All items in this section are `DONE (2026-11-26)` for local work, verified by exact commands in `progress.md`; the real-user pilot remains human and unstarted. Nothing was pushed or published.
+
+**7a. Hardening to the human boundary.** (`P0-11`, `P1-1`, `P1-2`)
+- **Intelligence:** env-gated waitlist endpoint with explicit consent and a static privacy page; CI gate `npm ci → typecheck → lint → test → build`; proprietary-notice scaffolding (LICENSE notice, THIRD_PARTY_NOTICES, CONTRIBUTING, CHANGELOG, CI badge).
+- **Human:** supply the real waitlist endpoint and privacy text, accept dependency risk in writing, approve the notice wording; run the pilot and real interviews.
+- **Done when:** the form cannot submit without consent or an endpoint; a deliberately failing test blocks the Pages job; scaffolding files exist and are linked from `README.md`; no push/publication/spend without final explicit confirmation.
+
+**7b. Verification matrix and reproducible artifacts.** (`V1-1`, `V1-2`, `V1-3`)
+- **Intelligence:** record exact commands/results in `progress.md`; script the artifact check for root-path and `/synodos` subpath variants; add a browser smoke test driven by `playwright-core` against locally installed Edge/Chrome.
+- **Human:** confirm which browser binary to use if auto-discovery finds more than one; no account or browser download by the agent.
+- **Done when:** every matrix row names a command actually run; both build variants pass the artifact check; the e2e smoke run exits 0 locally.
+
+**7c. CV-ready finish and pilot handoff.** (`CV-1`, `CV-2`, `CV-3`, `CV-4`)
+- **Intelligence:** rewrite `README.md` and add the CV docs; capture a deterministic walkthrough whose gitignored fixtures reproduce byte-identically; emit only allowlisted event names + timestamp with no user text and no network; write the pilot handoff doc.
+- **Human:** run the seven-day pilot, real interviews, real waitlist signups and partner conversations; give final explicit confirmation before any push/publish/spend.
+- **Done when:** all five docs exist and every claim maps to a file:line or a recorded command; the event harness test proves no content and no network egress; the handoff doc lists human steps as unstarted targets.
 
 ---
 

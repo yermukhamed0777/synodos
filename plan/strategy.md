@@ -6,7 +6,7 @@
 
 The travel-planning market rewards inventory and booking, not itinerary reasoning. Synodos is positioned around a narrower promise: **a deterministic, verifiable day plan that survives one change without invalidating the whole trip**, then hands off to merchants without claiming commission (`lib/itineraries.ts:217-245`, `components/planner/Planner.tsx:340`). The documented end-state is "LLM drafts, solver decides" (`docs/REVISED_PLAN.md:77-78`). That end-state is **documented only**: there is no LLM, no live places/weather/routes API and no server runtime anywhere in the repo. What actually ships today is a static marketing site plus a client-side planner over a curated dataset (`README.md:3,23`, `next.config.ts:6-10`, `lib/itineraries.ts:40-121`).
 
-Commercial posture: proprietary. On 2026-11-25 the user chose a **proprietary notice** (source visible, commercial rights retained) and **skipped the publish phase**. No `LICENSE` file was added; `gh repo view` reports the existing remote as `PUBLIC` with `licenseInfo: null`. This is a decision, not a licence grant.
+Commercial posture: proprietary. On 2026-11-25 the user chose a **proprietary notice** (source visible, commercial rights retained) and skipped the publish phase; on 2026-11-26 that decision was superseded and the phase **re-authorised** (`P1-1`/`P1-2` are OPEN again). No `LICENSE` file has been added yet; the 2026-11-25 `gh repo view` reported the existing remote as `PUBLIC` with `licenseInfo: null`. This is a decision, not a licence grant, and no push or publication is authorised without final explicit confirmation.
 
 ## Users
 
@@ -49,7 +49,7 @@ Two classes, kept separate:
 - Which processor replaces a personal Gmail for the waitlist, and who signs the DPA? (Human/legal.)
 - Does "AI companion" get built, or does the copy get downgraded to "planner"? (Human decision; blocks `P0-10` direction.)
 - Upgrade Next.js to 16.4.6+ now, or pin-and-accept with a written risk note? (Mixed; `P0-7`.)
-- Re-open Phase 2 for public-repo scaffolding (LICENSE notice, CONTRIBUTING, CHANGELOG, CI badge) at a later session? (Human; currently **no**.)
+- **Resolved 2026-11-26:** Phase 2 is re-authorised for local public-repo scaffolding (LICENSE notice, CONTRIBUTING, CHANGELOG, CI badge) under `P1-1`/`P1-2`, with the 2026-11-25 proprietary notice. Supersedes the earlier "currently **no**" answer. The human boundary remains final explicit confirmation before any push, publication or spend.
 
 ## Session history — exactly what was done
 
@@ -57,6 +57,8 @@ Rows below are derived from `git log --oneline -10` (run 2026-11-25) plus the cu
 
 | Date / ref | Session / commit | What was done (as recorded) |
 |---|---|---|
+| 2026-11-26 | hardening + CV-ready finish (uncommitted at write time) | Cleared all 20 short-term backlog IDs: real lint/typecheck/tests, per-day date-aware hard/advisory solver, 2–3 day cap, USD-only prices, saved-plan restore, env-gated consented waitlist + privacy page, reconciled copy, artefact/root-path checks, CI quality gates, browser e2e, CV docs, deterministic walkthrough and content-free events. Exact commands and results appended to `progress.md`; no push or release. |
+| 2026-11-26 (this session) | plan-layer re-base only | New mandate: finish all agent-doable work up to the real-user pilot; six 2026-11-26 decisions appended to `decisions.md`; `P1-1`/`P1-2` re-opened as OPEN; new IDs `P0-11`, `V1-1` … `V1-3`, `CV-1` … `CV-4` added to the plan. Planning only — no source code changed and no commands beyond file reads/writes. No metrics claimed. |
 | 2026-11-25 (this session) | uncommitted at write time → plan commit | Phase 1 audits of code/data, UI/docs, CI/packaging; ran `npm ci`, `build`, `lint`, `audit`; verified `out/index.html`; created `plan/` with six files and linked it from `README.md`. No source code fixed; publish phase skipped. |
 | prior | `0ff3139 Add deterministic feasibility solver: hours, closures, travel and buffers` | Solver added (current defect: single date for all days). |
 | prior | `317795e Document desktop builds and research docs` | Docs + desktop build notes. |
