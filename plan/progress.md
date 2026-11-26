@@ -146,3 +146,26 @@ All short-term IDs done. Remaining work is human only: recruit and consent parti
 | `npm.cmd run test:e2e` | exit 0; `tests 1`, `pass 1`, `fail 0`; browser test 2972.04 ms, suite 3432.63 ms. |
 | `npm.cmd run verify:variants` | exit 0; subpath base path `/synodos` PASS 0 problems; root base path `''` PASS 0 problems; `out/` restored to the `/synodos` build. |
 | `git diff --check` | exit 0; no whitespace errors (only LF→CRLF normalisation warnings). |
+
+## 2026-11-26 — Delivery: push, CI and deployment verification
+
+### What changed
+
+- Appended this entry only. No source, docs, workflows or dependencies changed after the push.
+
+### Exact commands and results
+
+| Command | Result |
+|---|---|
+| `git push origin main` | `PUSH_EXIT=0`; `29b8f8d..4f812d5 main -> main`; a `git-credential-manager.exe ... No such file or directory` stderr warning appeared but did not fail the push. |
+| `git rev-parse HEAD` | `4f812d559fb86a2539d46edf4270b172f89ffab0`. |
+| `git ls-remote origin refs/heads/main` | `4f812d559fb86a2539d46edf4270b172f89ffab0 refs/heads/main` — remote HEAD equals local HEAD. |
+| `gh run list --limit 3 --json databaseId,name,status,conclusion,headSha,createdAt` | New run `45752043617` (`Deploy Synodos to GitHub Pages`), `in_progress`, `headSha=4f812d5…`; prior runs `45625698008` and `45625449117` both success (older commits). |
+| `gh run watch 45752043617 --exit-status` | `WATCH_EXIT=0`; **build** job `139681875711` ✓ in 36 s with every gate step ✓ (`npm ci`, typecheck, lint, `npm test`, build, `verify:artifact`, browser smoke test, configure-pages, upload); **deploy** job `139682080715` ✓ in 11 s. Annotation: Node.js 20 actions forced onto Node 24 (checkout@v4, configure-pages@v5, setup-node@v4, upload-artifact@v4). |
+| `gh run view 45752043617 --json ...` | `status=completed`, `conclusion=success`, `url=https://github.com/yermukhamed0777/synodos/actions/runs/45752043617`, `updatedAt=2026-11-26T03:57:23Z`. |
+| `gh api repos/yermukhamed0777/synodos/deployments --jq '.[0] \| {id, ref, environment, created_at}'` | deployment `id=8076068381`, `environment=github-pages`, `ref=main`, `created_at=2026-11-26T03:57:05Z`. |
+| Live-page fetch of `https://yermukhamed0777.github.io/synodos/` | Returned the new copy verbatim: "The deterministic travel planner for the whole journey", "Concept preview — not live data", "Rebuild one day without losing the rest", "The waitlist is not open yet — no submission endpoint is configured in this build", and a Privacy footer link. |
+
+### Conclusion
+
+The CI quality gate passed on the pushed commit and the GitHub Pages deployment succeeded. No tag, release, visibility or licence change was made. This entry is documentation only; the pilot remains human and unstarted.

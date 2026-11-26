@@ -24,7 +24,8 @@ This folder is the long-term execution record for Synodos. It is **internal plan
 - **Baseline re-run at commit time (after all edits, 2026-11-25):** build **PASS**, exit 0, static generation 403 ms; lint **FAIL**, exit 1 (unchanged); audit **FAIL**, exit 1, 3 vulnerabilities (unchanged). Only `README.md` and new `plan/` files were modified.
 - **Baseline CI (2026-11-25):** run `45625449117` (`Deploy Synodos to GitHub Pages`) **passed** — build ✓ 33 s, deploy ✓ 11 s. Annotation: runner forced Node-20-targeting actions onto Node 24 (Node 20 deprecated). Remote HEAD `39c44e4…` equals local HEAD at push time.
 - **Current local results (2026-11-26, exact commands in `progress.md`):** `npm.cmd ci` → 0 vulnerabilities; `npm.cmd audit --audit-level=low` → 0 vulnerabilities; `npm.cmd run typecheck`/`lint` → exit 0; `npm.cmd test` → 25/25 pass; `npm.cmd run build` → 5 static routes; `npm.cmd run verify:artifact` → 0 problems; `npm.cmd run test:e2e` → 1/1 pass; `npm.cmd run verify:variants` → subpath and root builds both pass; `npm.cmd run verify` → whole chain exit 0.
-- **Next actions:** none agent-doable. All short-term IDs are `DONE (2026-11-26)`. Human-only work is defined in `docs/PILOT_HANDOFF.md`; mid/long-term IDs remain OPEN targets. If the owner authorises delivery, the next command is `git push origin main`, then watch CI/deploy and record run IDs here.
+- **Delivery (2026-11-26):** owner authorised push; local and remote HEAD are `4f812d559fb86a2539d46edf4270b172f89ffab0`. CI run `45752043617` (`Deploy Synodos to GitHub Pages`) **success** — build job `139681875711` ✓ 36 s, deploy job `139682080715` ✓ 11 s; Pages deployment `8076068381`. Live page fetched and verified. No tag, release or visibility/licence change.
+- **Next actions:** none agent-doable. All short-term IDs are `DONE (2026-11-26)`. Human-only work is defined in `docs/PILOT_HANDOFF.md`; mid/long-term IDs remain OPEN targets.
 
 ## Binding update convention
 
